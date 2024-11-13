@@ -1,0 +1,1 @@
+from .mnist import get_MNIST
