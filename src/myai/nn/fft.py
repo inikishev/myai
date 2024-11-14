@@ -5,7 +5,7 @@ import torch
 from .conv import convnd, ConvLike
 from .convtranspose import ConvTransposeLike, convtransposend
 
-class RFFTN(torch.nn.Module):
+class RFFT(torch.nn.Module):
     """Computes the N-dimensional discrete Fourier transform of real input"""
     def __init__(self, dim = (-2, -1), norm: T.Literal['forward', 'backward', 'ortho'] = 'backward'):
         super().__init__()
@@ -15,7 +15,7 @@ class RFFTN(torch.nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return torch.fft.rfftn(x, dim = self.dim, s = [x.shape[i] for i in self.dim], norm = self.norm)
 
-class FFTN(torch.nn.Module):
+class FFT(torch.nn.Module):
     """Computes the N-dimensional discrete Fourier transform of real input"""
     def __init__(self, dim = (-2, -1), norm: T.Literal['forward', 'backward', 'ortho'] = 'backward'):
         super().__init__()
@@ -25,7 +25,7 @@ class FFTN(torch.nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return torch.fft.fftn(x, dim = self.dim, s = [x.shape[i] for i in self.dim], norm = self.norm)
 
-class IRFFTN(torch.nn.Module):
+class IRFFT(torch.nn.Module):
     """Computes the inverse of RFFT."""
     def __init__(self, dim = (-2, -1), norm: T.Literal['forward', 'backward', 'ortho'] = 'backward'):
         super().__init__()
@@ -35,7 +35,7 @@ class IRFFTN(torch.nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return torch.fft.irfftn(x, dim = self.dim, norm = self.norm)
     
-class IFFTN(torch.nn.Module):
+class IFFT(torch.nn.Module):
     """Computes the inverse of RFFT."""
     def __init__(self, dim = (-2, -1), norm: T.Literal['forward', 'backward', 'ortho'] = 'backward'):
         super().__init__()

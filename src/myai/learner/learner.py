@@ -17,8 +17,9 @@ from ..python_tools import (SaveSignature, get__name__, get_full_kwargs,
                             make_dict_serializeable, epoch_to_datetime)
 from ..torch_tools import CUDA_IF_AVAILABLE, maybe_ensure_cpu_number
 from .callbacks.default import Default
-
+from .callbacks.scheduler_ import scheduler as _scheduler_cb
 DEFAULT_CALLBACKS = ()
+
 
 if T.TYPE_CHECKING:
     from accelerate import Accelerator
@@ -95,15 +96,18 @@ class Learner(EventModel):
         # some of those may be SaveSignature
         # which is an easy way to save all kwargs that stuff like optimizer uses
         # all kwargs are stored in `self.info`
-        for attr, cls in (('model', model), ('loss_fn', loss_fn), ('optimizer', optimizer), ('scheduler', scheduler)):
+        for attr, cls in (('model', model), ('loss_fn', loss_fn), ('optimizer', optimizer)):
             if cls is not None: self._set_x(attr, cls)
             else: setattr(self, attr, None)
+        self.scheduler = scheduler
 
         # add all callbacks
         if isinstance(callbacks, Callback): callbacks = [callbacks]
         if isinstance(default_callbacks, Callback): default_callbacks = [default_callbacks]
         for c in default_callbacks: self.add_callback(c, default=True)
         for c in callbacks: self.add_callback(c)
+        if scheduler is not None:
+            self.add_callback(_scheduler_cb(scheduler))
 
 
     def _set_x_cls[**P](self, attr: str, x: abc.Callable[P, T.Any], *args: P.args, **kwargs: P.kwargs):

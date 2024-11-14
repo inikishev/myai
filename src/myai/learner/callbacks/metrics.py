@@ -9,7 +9,7 @@ import torch
 
 from ...event_model import Callback
 from ...torch_tools.conversion import maybe_ensure_detach_cpu
-from ...metrics import accuracy
+from ...metrics import accuracy, dice, iou
 
 if T.TYPE_CHECKING:
     from ..learner import Learner
@@ -82,3 +82,123 @@ class Accuracy(Metric):
 
     def __call__(self, learner: "Learner") -> float:
         return accuracy(learner.preds, learner.targets).detach().cpu().item()
+
+class PerClassMetric(Callback, ABC):
+    order = -1
+    """A metric that gets logged after train and test batches.
+    Please make sure order is not bigger than 0, reason being that
+    some callbacks might run stuff through the model and assign `preds` and `targets`.
+    So the metric won't run with the actual train or test samples."""
+
+    def __init__(
+        self,
+        metric: str,
+        class_labels,
+        train_step: int | None,
+        test_step: int | None,
+        bg_index: int | None,
+        agg_fn=np.mean,
+    ):
+        """_summary_
+
+        :param metric: _description_
+        :param class_labels: This INCLUDES BACKGROUND!
+        :param train_step: _description_
+        :param test_step: _description_
+        :param bg_index: _description_, defaults to 0
+        :param agg_fn: _description_, defaults to np.mean
+        """
+        super().__init__()
+        self.metric = metric
+        self.train_step = train_step
+        self.test_step = test_step
+        self.agg_fn = agg_fn
+        self.class_labels = class_labels
+        self.bg_index = bg_index
+
+        self.test_epoch_values = []
+        if self.order > 0:
+            warnings.warn(
+                f"Metric {self.metric} has order {self.order} which is higher than 0, so it might run after callbacks that modify `learner.preds`, `learner.targets`, etc."
+            )
+
+    @abstractmethod
+    def __call__(self, learner: "Learner") -> T.Any:
+        """Evaluate the metric. Please make sure returned value is detached and on CPU."""
+
+    def after_train_step(self, learner: "Learner"):
+        if self.train_step is not None and learner.num_forwards % self.train_step == 0:
+            values = self(learner)
+
+            if self.class_labels is None: self.class_labels = list(range(len(values)))
+
+            for label, value in zip(self.class_labels, values):
+                learner.log(f'train {self.metric} - {label}', value)
+
+            if self.bg_index is not None: values[self.bg_index] = np.nan
+
+            learner.log(f'train {self.metric} mean', np.nanmean(values))
+
+    def after_test_step(self, learner: "Learner"):
+        if self.test_step is not None and learner.cur_batch % self.test_step == 0:
+            self.test_epoch_values.append(self(learner))
+
+    def after_test_epoch(self, learner: "Learner"):
+        if len(self.test_epoch_values) > 0:
+            values = np.array(self.agg_fn(self.test_epoch_values, 0), copy=False)
+
+            if self.class_labels is None: self.class_labels = list(range(len(values)))
+
+            for i, (label, value) in enumerate(zip(self.class_labels, values)):
+                if i == self.bg_index: continue
+                learner.log(f'test {self.metric} - {label}', value)
+
+            if self.bg_index is not None: values[:, self.bg_index] = np.nan
+            learner.log(f'test {self.metric} mean', np.nanmean(values))
+
+            self.test_epoch_values = []
+
+
+class Dice(PerClassMetric):
+    def __init__(
+        self,
+        class_labels=None,
+        bg_index=None,
+        train_step: int | None = 1,
+        test_step: int | None = 1,
+        agg_fn=np.mean,
+        name="dice",
+    ):
+        super().__init__(
+            metric=name,
+            class_labels=class_labels,
+            train_step=train_step,
+            test_step=test_step,
+            bg_index=bg_index,
+            agg_fn=agg_fn,
+        )
+
+    def __call__(self, learner: "Learner"):
+        return dice(learner.preds, learner.targets).detach().cpu()
+
+class IOU(PerClassMetric):
+    def __init__(
+        self,
+        class_labels=None,
+        bg_index=None,
+        train_step: int | None = 1,
+        test_step: int | None = 1,
+        agg_fn=np.mean,
+        name="iou",
+    ):
+        super().__init__(
+            metric=name,
+            class_labels=class_labels,
+            train_step=train_step,
+            test_step=test_step,
+            bg_index=bg_index,
+            agg_fn=agg_fn,
+        )
+
+    def __call__(self, learner: "Learner"):
+        return iou(learner.preds, learner.targets).detach().cpu()

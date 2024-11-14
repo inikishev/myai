@@ -21,10 +21,11 @@ class _ConditionFirst:
 class _ConditionInterval:
     def __init__(self, every:int, start: int):
         self.every = every
-        self.step = start
+        self.start = start
+        self.step = 0
     def __call__(self, m: "EventModel"):
         res = False
-        if self.step % self.every == 0: res = True
+        if self.step >= self.start and self.step % self.every == 0: res = True
         self.step += 1
         return res
 

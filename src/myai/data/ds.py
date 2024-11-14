@@ -8,7 +8,7 @@ from collections import UserList, abc
 import numpy as np
 import torch
 
-from ..python_tools import Composable, compose, compose_none, SupportsIter, func2method
+from ..python_tools import Composable, compose, maybe_compose, SupportsIter, func2method
 from ..rng import RNG
 
 from torch.utils.data import DataLoader
@@ -16,8 +16,8 @@ from torch.utils.data import DataLoader
 class Sample:
     def __init__(self, data, loader: Composable | None, transform: Composable | None):
         self.data = data
-        self.loader: abc.Callable = compose_none(loader)
-        self.transform = compose_none(transform)
+        self.loader: abc.Callable = maybe_compose(loader)
+        self.transform = maybe_compose(transform)
 
         self.preloaded = None
 
@@ -34,12 +34,12 @@ class Sample:
     def add_loader_(self, loader: Composable):
         self.loader = compose(self.loader, loader)
     def set_loader_(self, loader: Composable | None):
-        self.loader = compose_none(loader)
+        self.loader = maybe_compose(loader)
 
     def add_transform_(self, transform: Composable):
         self.transform = compose(self.transform, transform)
     def set_transform_(self, transform: Composable | None):
-        self.transform = compose_none(transform)
+        self.transform = maybe_compose(transform)
 
     def copy(self):
         sample = self.__class__(self.data, self.loader, self.transform)

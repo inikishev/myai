@@ -1,7 +1,8 @@
+import math
 import os
 import typing as T
 from collections import abc
-
+import warnings
 import numpy as np
 import torch
 from torchvision.utils import make_grid
@@ -14,6 +15,16 @@ from ...video import OpenCVRenderer
 if T.TYPE_CHECKING:
     from ..learner import Learner
 
+
+
+def _repeat_to_max_shape(input: torch.Tensor, max_shape: tuple[int, int]):
+    wtimes = max_shape[1] // input.shape[-1]
+    if wtimes > 1:
+        input = input.repeat_interleave(wtimes, -1)
+    htimes = max_shape[0] // input.shape[-2]
+    if htimes > 1:
+        input = input.repeat_interleave(htimes, -2)
+    return input
 class Renderer(Callback):
     order = 11
 
@@ -54,16 +65,14 @@ class Renderer(Callback):
                 )
 
             # compose the final frame
-            total = [i for i in self.tiles if i is not None]
+            # all images must have the same shape so we make them 3hw
+            total = [force_hw3(i).moveaxis(-1, 0) for i in self.tiles if i is not None]
             if len(total) > 1:
 
                 # pad all images to the size of the largest image
                 max_x = max([i.shape[-1] for i in total])
                 max_y = max([i.shape[-2] for i in total])
-                # all images must have the same shape so we make them 3hw
-                total = [force_hw3(
-                    pad_to_shape(i, shape = (max_y, max_x), mode='min', where='center')
-                ).moveaxis(-1, 0) for i in total]
+                total = [pad_to_shape(_repeat_to_max_shape(i, (max_y, max_x)), shape = (max_y, max_x), mode='min', where='center').cpu() for i in total]
                 frame = make_grid(total, nrow=self.nrows).detach().cpu()
 
             else: frame = total[0]
@@ -73,17 +82,16 @@ class Renderer(Callback):
 
             self.tiles = []
 
-    def exit(self, learner: "Learner"):
-        if self.renderer is not None: self.renderer.release()
-        self.renderer = None
+    def _release(self):
+        try:
+            if self.renderer is not None: self.renderer.release()
+            self.renderer = None
+        except ValueError:
+            warnings.warn('Renderer got no frames.')
 
-    def after_fit(self, learner: "Learner"):
-        if self.renderer is not None: self.renderer.release()
-        self.renderer = None
-
-    def on_fit_exception(self, learner: "Learner"):
-        if self.renderer is not None: self.renderer.release()
-        self.renderer = None
+    def exit(self, learner: "Learner"): self._release()
+    def after_fit(self, learner: "Learner"): self._release()
+    def on_fit_exception(self, learner: "Learner"): self._release()
 
 
 class _BatchCatVideoCallback(Callback):
@@ -120,13 +128,19 @@ class _BatchCatVideoCallback(Callback):
         if self.norm_to is None: return _normalize(x, 0, 255)
         return ((x.clip(*self.norm_to) - self.norm_to[0]) / (self.norm_to[1] - self.norm_to[0])) * 255
 
-    def _add(self, learner: "Learner", x: torch.Tensor | None, normalize = True):
+    def _add(self, learner: "Learner", x: torch.Tensor | None, normalize = True, channel_grid = False):
         """Add (B, C, H, W) frame if it is not None. if more then 1 image in the batch, makes a grid.
         Clips to self norm_to and normalizes to 0, 255."""
         if x is not None:
 
             if x.ndim != 4: raise ValueError(f'x.shape = {x.shape}, must be (B, C, H, W)')
 
+            if channel_grid and x.shape[1] != 1:
+                if self.norm_to is not None: raise ValueError('channel_grid = True but norm_to is not None, it will normalize it to 0-1, but norm to has other normalization so it will look stupid after that gets applied as well.')
+                if x.shape[0] == 1: fix = True
+                else: fix = False
+                x = make_grid(x.moveaxis(1, 0), nrow=int(math.ceil(max(1, x.shape[1]**0.5))), normalize=True, scale_each = True).unsqueeze(1)
+                if fix: x = x[0, None] # because when 1 channel make_grid makes it 3.
             if x.shape[0] == 1: x = x[0]
             else: x = make_grid(x, nrow=self.nrows)
 
@@ -205,11 +219,14 @@ class Render2DSegmentationVideo(_BatchCatVideoCallback):
         nrows=2,
         show_inputs = True,
         show_raw_preds = True,
+        show_raw_preds_rgb = True,
         show_binary_preds = True,
         show_binary_preds_overlay = True,
         show_targets = True,
         show_targets_overlay = True,
         show_error_overlay = True,
+        inputs_grid = False,
+        overlay_channel = None,
         binary_threshold = 0.5,
         alpha = 0.3,
         norm_to: tuple[float, float] | T.Literal['targets'] | None = None,
@@ -230,6 +247,7 @@ class Render2DSegmentationVideo(_BatchCatVideoCallback):
 
         self.show_inputs = show_inputs
         self.show_raw_preds = show_raw_preds
+        self.show_raw_preds_rgb = show_raw_preds_rgb
         self.show_binary_preds = show_binary_preds
         self.show_binary_preds_overlay = show_binary_preds_overlay
         self.show_targets = show_targets
@@ -237,6 +255,8 @@ class Render2DSegmentationVideo(_BatchCatVideoCallback):
         self.show_error_overlay = show_error_overlay
         self.binary_threshold = binary_threshold
         self.alpha = alpha
+        self.inputs_grid = inputs_grid
+        self.overlay_channel = overlay_channel
 
     def after_forward(self, learner: "Learner"):
         if learner.status == 'train' and self.n is not None:
@@ -246,44 +266,47 @@ class Render2DSegmentationVideo(_BatchCatVideoCallback):
             with torch.no_grad():
                 if self.activation is not None: preds = self.activation(preds)
 
+                if preds.shape[1] > 1: binary = preds.argmax(1)
+                else: binary = (preds > self.binary_threshold).float()
+                targets = self.targets
+                if targets is not None and targets.ndim == 4: targets = targets.argmax(1)
+
                 # add inputs
-                if self.show_inputs: self._add(learner, self.inputs)
+                if self.show_inputs: self._add(learner, self.inputs, channel_grid=self.inputs_grid)
 
                 # add raw preds
-                if self.show_raw_preds: self._add(learner, preds)
+                if self.show_raw_preds: self._add(learner, preds, channel_grid=True)
+                if self.show_raw_preds_rgb: self._add(learner, preds, channel_grid=False)
 
                 # add binary preds
                 if self.show_binary_preds:
-                    binary = preds.argmax(1)
-                    binary = make_segmentation_overlay(binary.moveaxis(1, 0)).moveaxis(0,1)
-                    self._add(learner, binary * 255, normalize = False)
+                    binary_preds = make_segmentation_overlay(binary.moveaxis(0, -1)).moveaxis(-1, 0)
+                    self._add(learner, binary_preds * 255, normalize = False)
 
                 # add binary preds overlay
                 if self.show_binary_preds_overlay and self.inputs is not None:
-                    binary = preds.argmax(1)
-                    preds_overlay = overlay_segmentation(self.inputs.moveaxis(0, -1), binary.moveaxis(0, -1), alpha=self.alpha).moveaxis(-1, 0)
+                    inputs = self.inputs
+                    if self.overlay_channel is not None: inputs = inputs[:,self.overlay_channel].unsqueeze(1)
+                    preds_overlay = overlay_segmentation(inputs.moveaxis(0, -1), binary.moveaxis(0, -1), alpha=self.alpha).moveaxis(-1, 0)
                     self._add(learner, preds_overlay)
 
                 # add targets
-                if self.show_targets and self.targets is not None:
-                    targets = self.targets
-                    if targets.ndim == 4: targets = targets.argmax(1)
-                    targets = make_segmentation_overlay(targets.moveaxis(0, -1)).moveaxis(-1, 0)
-                    self._add(learner, targets * 255, normalize = False)
+                if self.show_targets and targets is not None:
+                    binary_targets = make_segmentation_overlay(targets.moveaxis(0, -1)).moveaxis(-1, 0)
+                    self._add(learner, binary_targets * 255, normalize = False)
 
                 # add targets overlay
-                if self.show_binary_preds_overlay and self.targets is not None and self.inputs is not None:
-                    targets = self.targets
-                    if targets.ndim == 4: targets = targets.argmax(1)
-                    targets_overlay = overlay_segmentation(self.inputs.moveaxis(0, -1), targets.moveaxis(0, -1), alpha=self.alpha).moveaxis(-1, 0)
+                if self.show_binary_preds_overlay and targets is not None and self.inputs is not None:
+                    inputs = self.inputs
+                    if self.overlay_channel is not None: inputs = inputs[:,self.overlay_channel].unsqueeze(1)
+                    targets_overlay = overlay_segmentation(inputs.moveaxis(0, -1), targets.moveaxis(0, -1), alpha=self.alpha).moveaxis(-1, 0)
                     self._add(learner, targets_overlay)
 
                 # add error overlay
-                if self.show_binary_preds_overlay and self.targets is not None and self.inputs is not None:
-                    targets = self.targets
-                    if targets.ndim == 4: targets = targets.argmax(1)
-                    binary = preds.argmax(1)
-                    targets_overlay = overlay_segmentation(self.inputs.moveaxis(0, -1), (binary == targets).moveaxis(0, -1), alpha=self.alpha).moveaxis(-1, 0)
+                if self.show_binary_preds_overlay and targets is not None and self.inputs is not None:
+                    inputs = self.inputs
+                    if self.overlay_channel is not None: inputs = inputs[:,self.overlay_channel].unsqueeze(1)
+                    targets_overlay = overlay_segmentation(inputs.moveaxis(0, -1), (binary != targets).moveaxis(0, -1), alpha=self.alpha).moveaxis(-1, 0)
                     self._add(learner, targets_overlay)
 
 

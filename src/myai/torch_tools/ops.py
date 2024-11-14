@@ -76,19 +76,20 @@ def binary_erode3d(tensor: torch.Tensor, n: int = 1):
     return torch.where(convolved==7, 1, 0)[0]
 
 def one_hot_mask(mask: torch.Tensor, num_classes:int) -> torch.Tensor:
-    """Takes a mask (*) and one-hot encodes into (C, *)"""
+    """Takes a mask `(*)` and one-hot encodes into `(C, *)`"""
     return torch.nn.functional.one_hot(mask.to(torch.int64), num_classes).moveaxis(-1, 0) # type:ignore # pylint:disable=E1102
 
-batched_one_hot_mask = torch.vmap(one_hot_mask)
-"""Takes a batch of masks (B, *) and one-hot encodes into (B, C, *)."""
+def batched_one_hot_mask(mask: torch.Tensor, num_classes:int) -> torch.Tensor:
+    """Takes a batch of masks `(B, *)` and one-hot encodes into `(B, C, *)`."""
+    return torch.nn.functional.one_hot(mask.to(torch.int64), num_classes).moveaxis(-1, 1) # type:ignore # pylint:disable=E1102
 
 def raw_preds_to_one_hot(raw: torch.Tensor) -> torch.Tensor:
-    """Takes raw model predictions in (C, *) format and turns into one-hot encoding in (C, *) format."""
+    """Takes raw model predictions in `(C, *)` format and turns into one-hot encoding in `(C, *)` format."""
     mask = torch.argmax(raw, dim=0)
     return one_hot_mask(mask, raw.shape[0])
 
 batched_raw_preds_to_one_hot = torch.vmap(raw_preds_to_one_hot)
-"""Takes a batch of raw model predictions in (B, C, *) format and turns into one-hot encoding in (B, C, *) format."""
+"""Takes a batch of raw model predictions in `(B, C, *)` format and turns into one-hot encoding in `(B, C, *)` format."""
 
 
 @T.overload

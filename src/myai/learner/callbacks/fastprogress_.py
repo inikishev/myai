@@ -64,3 +64,8 @@ class FastProgress(Callback):
 
     def after_fit(self, learner: "Learner"):
         self._plot(learner)
+        self.pb.on_iter_end()
+
+    def on_fit_exception(self, learner: "Learner"):
+        self._plot(learner)
+        self.pb.on_iter_end()

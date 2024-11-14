@@ -74,8 +74,7 @@ def pad_to_shape(
     else: min = 0
 
     if len(shape) < input.ndim:
-        shape = list(shape)
-        shape = list(input.shape[:len(shape)]) + shape
+        shape = list(input.shape[:input.ndim - len(shape)]) + list(shape)
 
     return pad(
         input=input,

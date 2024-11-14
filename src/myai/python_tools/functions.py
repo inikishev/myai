@@ -39,7 +39,7 @@ def compose(*functions: Composable) -> Callable:
     if len(flattened) == 1: return flattened[0]
     return Compose(*flattened)
 
-def compose_none(*functions: Callable | None | Iterable[Callable | None]) -> Callable:
+def maybe_compose(*functions: Callable | None | Iterable[Callable | None]) -> Callable:
     """Compose some functions while ignoring None, if got only None, returns identity."""
     flattened = [i for i in flatten(functions) if i is not None]
     if len(flattened) == 1: return flattened[0]

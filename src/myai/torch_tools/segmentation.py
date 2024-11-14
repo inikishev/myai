@@ -4,6 +4,8 @@ import typing as T
 import numpy as np
 import torch
 
+from ..transforms import totensor
+
 COLORS = {
     "red": (1, 0, 0),
     "r": (1, 0, 0),
@@ -27,15 +29,16 @@ COLORS = {
     "gray": (0.5, 0.5, 0.5),
 }
 
-def overlay_segmentation(x: torch.Tensor, seg:torch.Tensor, alpha: float = 0.5, colors = None, bg_index = 0):
+def overlay_segmentation(x: torch.Tensor | np.ndarray, seg:torch.Tensor | np.ndarray, alpha: float = 0.5, colors = None, bg_index = 0):
     """_summary_
 
-    :param x: Tensor to put segmentation onto. Either (C, *) or (*). Will be converted to (3, *).
+    :param x: Tensor to put segmentation onto. Must be `(C, *)`. Will be converted to `(3, *)`.
     :param seg: Binarized segmentation broadcastable into x.
     :param alpha: Low alpha means segmentation is more transparent, defaults to 0.5
     :param colors: List of tuples of three numbers from 0 to 1, color names, or None, defaults to None
     """
-    x = x.clone().float()
+    x = totensor(x).clone().float()
+    seg = totensor(seg).clone()
 
     n_classes = int(seg.max().detach().cpu()) + 1
     if bg_index is None:
@@ -70,6 +73,8 @@ def overlay_segmentation(x: torch.Tensor, seg:torch.Tensor, alpha: float = 0.5, 
         x = torch.cat((x,x,x), 0)
     elif x.shape[0] == 2:
         x = torch.cat((x,x), 0)[:-1]
+    elif x.shape[0] > 3:
+        x = x[:3]
 
     for cls, c in zip(range(n_classes), colors):
         if cls == bg_index: continue
@@ -81,8 +86,9 @@ def overlay_segmentation(x: torch.Tensor, seg:torch.Tensor, alpha: float = 0.5, 
     return x
 
 
-def make_segmentation_overlay(seg:torch.Tensor, colors = None, bg_index = 0, bg_color = (0,0,0)):
+def make_segmentation_overlay(seg:torch.Tensor | np.ndarray, colors = None, bg_index = 0, bg_color = (0,0,0)):
     """Takes (*) segmentation, returns (3, *) colored overlay."""
+    seg = totensor(seg, device = torch.device('cpu'))
     x = torch.ones_like(seg)
     x = (torch.stack([x,x,x], -1) * torch.tensor(bg_color)).moveaxis(-1, 0)
     x = overlay_segmentation(x, seg, alpha = 1, colors=colors, bg_index=bg_index)
