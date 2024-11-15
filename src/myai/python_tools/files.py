@@ -71,7 +71,7 @@ def getfoldersizeMB(folder) -> float:
             total += path.stat().st_size
     return total / 1024 / 1024
 
-__valid_fname_chars = frozenset(" -_.()")
+__valid_fname_chars = frozenset(" -_.,()")
 
 def is_valid_fname(string:str) -> bool:
     if len(string) == 0: return False

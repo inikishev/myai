@@ -14,7 +14,7 @@ from ..loaders.yaml import yamlread, yamlwrite
 from ..logger.base_logger import BaseLogger
 from ..logger.dict_logger import DictLogger
 from ..python_tools import (SaveSignature, get__name__, get_full_kwargs,
-                            make_dict_serializeable, epoch_to_datetime)
+                            make_dict_serializeable, epoch_to_datetime, to_valid_fname)
 from ..torch_tools import CUDA_IF_AVAILABLE, maybe_ensure_cpu_number
 from .callbacks.default import Default
 from .callbacks.scheduler_ import scheduler as _scheduler_cb
@@ -71,7 +71,7 @@ class Learner(EventModel):
         self.main_metric = main_metric
 
         self.creation_time = time.time()
-        self._dirs = {}
+        self._dirs: dict[tuple[str | None, str], str] = {}
         """Directories for each root."""
 
         # counters
@@ -111,7 +111,14 @@ class Learner(EventModel):
 
 
     def _set_x_cls[**P](self, attr: str, x: abc.Callable[P, T.Any], *args: P.args, **kwargs: P.kwargs):
-        setattr(self, attr, x(*args, **kwargs))
+        arglist = list(args)
+        for i,v in enumerate(arglist):
+            if isinstance(v, SaveSignature): arglist[i] = v.resolve()
+
+        for k,v in kwargs.items():
+            if isinstance(v, SaveSignature): kwargs[k] = v.resolve()
+
+        setattr(self, attr, x(*arglist, **kwargs)) # type:ignore
         self.info[attr] = {
             "name": get__name__(x),
             'params': make_dict_serializeable(get_full_kwargs(x, *args, **kwargs), raw_strings=False)
@@ -122,7 +129,12 @@ class Learner(EventModel):
         # SaveSignature contains x(*args, **kwargs) as well as signature of x
         # we set x and save signature by using _set_x_cls
         if isinstance(x, SaveSignature):
-            return self._set_x_cls(attr, x.obj, **x.signature)
+            setattr(self, attr, x.resolve())
+            self.info[attr] = {
+                "name": get__name__(x.obj),
+                'params': make_dict_serializeable(x.signature, raw_strings=False)
+            }
+            return self
 
         # else just set the attribute
         setattr(self, attr, x)
@@ -224,12 +236,26 @@ class Learner(EventModel):
         while '  ' in string: string = string.replace('  ', ' ')
         return string.strip()
 
-    def get_learner_dir(self, root: str = 'runs'):
-        """Creates a directory if it doesn't exist and returns the path. The path is `root/name`"""
-        if root in self._dirs: return self._dirs[root]
+    def get_learner_dir(self, root: str = 'runs', prefix = None, postfix=None):
+        """Creates a directory if it doesn't exist and returns the path. The path is `root(/prefix)/name(/postfix)`"""
+        if (prefix, root) in self._dirs:
+            dir = self._dirs[(prefix, root)]
+
+            # maybe add postfix
+            if postfix is not None:
+                dir = os.path.join(dir, self.process_template(postfix))
+                if not os.path.exists(dir): os.mkdir(dir)
+
+            return dir
 
         if not os.path.exists(root): os.mkdir(root)
-        dir = os.path.join(root, self.name)
+
+        # maybe add prefix
+        if prefix is not None:
+            root = os.path.join(root, self.process_template(prefix))
+            if not os.path.exists(root): os.mkdir(root)
+
+        dir = os.path.join(root, to_valid_fname(self.name))
         if os.path.exists(dir):
             dir = f'{dir} 2'
             c = 2
@@ -238,26 +264,37 @@ class Learner(EventModel):
                 dir = f'{dir[:-2]} {c}'
 
         os.mkdir(dir)
-        self._dirs[root] = dir
+
+        self._dirs[(prefix, root)] = dir
+
+        # maybe add postfix
+        if postfix is not None:
+            dir = os.path.join(dir, self.process_template(postfix))
+            if not os.path.exists(dir): os.mkdir(dir)
+
         return dir
 
 
-    def get_epoch_dir(self, root: str = 'runs', epoch_template = '{total_epochs} {logger.test loss} {main_metric}'):
-        """Creates a directory if it doesn't exist and returns the path. The path is `root/name/epoch`"""
-        root = self.get_learner_dir(root)
-        dir = os.path.join(root, self.process_template(epoch_template))
+    def get_epoch_dir(self, root: str = 'runs', epoch_template = '{total_epochs} {logger.test loss} {main_metric}', prefix = None, postfix=None):
+        """Creates a directory if it doesn't exist and returns the path. The path is `root/name(/prefix)/epoch(/postfix)`"""
+        # get root dir
+        dir = self.get_learner_dir(root)
+
+        # maybe add prefix
+        if prefix is not None:
+            dir = os.path.join(dir, self.process_template(prefix))
+            if not os.path.exists(dir): os.mkdir(dir)
+
+        # add epoch dir
+        dir = os.path.join(dir, self.process_template(epoch_template))
         if not os.path.exists(dir): os.mkdir(dir)
-        return dir
 
-    def get_prefix_epoch_dir(self, prefix: str, root: str = 'runs', epoch_template = '{total_epochs} {logger.test loss} {main_metric}'):
-        """Creates a directory if it doesn't exist and returns the path. The path is `root/name/prefix/epoch`"""
-        root = self.get_learner_dir(root)
-        rootprefix = os.path.join(root, prefix)
-        if not os.path.exists(rootprefix): os.mkdir(rootprefix)
-        dir = os.path.join(rootprefix, self.process_template(epoch_template))
-        if not os.path.exists(dir): os.mkdir(dir)
-        return dir
+        # maybe add postfix
+        if postfix is not None:
+            dir = os.path.join(dir, self.process_template(postfix))
+            if not os.path.exists(dir): os.mkdir(dir)
 
+        return dir
 
     @property
     def name(self):
@@ -321,31 +358,36 @@ class Learner(EventModel):
                 setattr(self, attr, value['object'])
 
 
-    def save(self, dir: str, mkdir = True):
+    def save(self, dir: str, mkdir = True, state_dict=True, logger=True, info=True, text=True):
         """Saves this learner to a directory, creates files in that directory."""
         if not os.path.exists(dir) and mkdir: os.mkdir(dir)
 
-        # save info
-        info = self.info.copy()
-        info['cur_batch'] = self.cur_batch; info['cur_epoch'] = self.cur_epoch
-        info['total_batches'] = self.total_batches; info['total_epochs'] = self.total_epochs
-        info['num_forwards'] = self.num_forwards; info['num_backwards'] = self.num_backwards
-        yamlwrite(info, os.path.join(dir, 'info.yaml'))
+        if info:
+            # save info
+            info = self.info.copy()
+            info['cur_batch'] = self.cur_batch; info['cur_epoch'] = self.cur_epoch
+            info['total_batches'] = self.total_batches; info['total_epochs'] = self.total_epochs
+            info['num_forwards'] = self.num_forwards; info['num_backwards'] = self.num_backwards
+            yamlwrite(info, os.path.join(dir, 'info.yaml'))
 
         # save state_dicts
-        learner_attrs = {} # learner state_dict for stuff like cur_batch
-        for k, v in self.state_dict().items():
-            if k == 'logger': continue # logger is saved using `save`
-            elif 'state_dict' in v: torch.save(v['state_dict'], os.path.join(dir, f'{k}.state_dict'))
-            else: learner_attrs[k] = v
-        torch.save(learner_attrs, os.path.join(dir, 'learner.attrs'))
+        if state_dict:
+            learner_attrs = {} # learner state_dict for stuff like cur_batch
+            for k, v in self.state_dict().items():
+                if k == 'logger': continue # logger is saved using `save`
+                elif 'state_dict' in v: torch.save(v['state_dict'], os.path.join(dir, f'{k}.state_dict'))
+                else: learner_attrs[k] = v
+            torch.save(learner_attrs, os.path.join(dir, 'learner.attrs'))
 
         # save logger
-        self.logger.save(os.path.join(dir, 'logger.npz'))
+        if logger:
+            self.logger.save(os.path.join(dir, 'logger.npz'))
 
         # save model and optimizer as strings
-        txtwrite(str(self.model), os.path.join(dir, 'model.txt'))
-        txtwrite(str(self.optimizer), os.path.join(dir, 'optimizer.txt'))
+        if text:
+            txtwrite(str(self.model), os.path.join(dir, 'model.txt'))
+            txtwrite(str(self.optimizer), os.path.join(dir, 'optimizer.txt'))
+            txtwrite(self.logger.as_yaml_string(), os.path.join(dir, 'logger.yaml'))
 
     def load(self, dir: str):
         files = set(os.listdir(dir))
@@ -468,7 +510,8 @@ class Learner(EventModel):
             # they can be replaced by other callbacks that are used
             # in the middle of training, and we don't want fit callback to break
                 self.fire_event('fit', dltrain = self.dltrain, epochs_iterator = self.epochs_iterator, )
-        except tuple(self.catch): pass
+        except tuple(self.catch):
+            self.fire_event('on_fit_exception')
         except Exception as e:
             self.fire_event('on_fit_exception')
             raise e

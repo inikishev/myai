@@ -18,7 +18,7 @@ class _SchedulerCallback(Callback):
 
     def enter(self, learner: "Learner"):
         if self.scheduler is not None:
-            learner._set_x('scheduler', scheduler)
+            learner._set_x('scheduler', self.scheduler)
             self.scheduler = learner.scheduler
         else:
             learner.scheduler = None

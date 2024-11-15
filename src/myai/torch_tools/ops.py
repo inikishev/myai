@@ -88,8 +88,10 @@ def raw_preds_to_one_hot(raw: torch.Tensor) -> torch.Tensor:
     mask = torch.argmax(raw, dim=0)
     return one_hot_mask(mask, raw.shape[0])
 
-batched_raw_preds_to_one_hot = torch.vmap(raw_preds_to_one_hot)
-"""Takes a batch of raw model predictions in `(B, C, *)` format and turns into one-hot encoding in `(B, C, *)` format."""
+def batched_raw_preds_to_one_hot(raw: torch.Tensor) -> torch.Tensor:
+    """Takes a batch of raw model predictions in `(B, C, *)` format and turns into one-hot encoding in `(B, C, *)` format."""
+    mask = torch.argmax(raw, dim=1)
+    return batched_one_hot_mask(mask, raw.shape[1])
 
 
 @T.overload

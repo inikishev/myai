@@ -10,6 +10,7 @@ import torch
 from ...event_model import Callback
 from ...torch_tools.conversion import maybe_ensure_detach_cpu
 from ...metrics import accuracy, dice, iou
+from ...torch_tools import batched_raw_preds_to_one_hot
 
 if T.TYPE_CHECKING:
     from ..learner import Learner
@@ -97,7 +98,6 @@ class PerClassMetric(Callback, ABC):
         train_step: int | None,
         test_step: int | None,
         bg_index: int | None,
-        agg_fn=np.mean,
     ):
         """_summary_
 
@@ -112,7 +112,6 @@ class PerClassMetric(Callback, ABC):
         self.metric = metric
         self.train_step = train_step
         self.test_step = test_step
-        self.agg_fn = agg_fn
         self.class_labels = class_labels
         self.bg_index = bg_index
 
@@ -135,7 +134,7 @@ class PerClassMetric(Callback, ABC):
             for label, value in zip(self.class_labels, values):
                 learner.log(f'train {self.metric} - {label}', value)
 
-            if self.bg_index is not None: values[self.bg_index] = np.nan
+            if self.bg_index is not None: values = np.delete(values, self.bg_index)
 
             learner.log(f'train {self.metric} mean', np.nanmean(values))
 
@@ -145,15 +144,15 @@ class PerClassMetric(Callback, ABC):
 
     def after_test_epoch(self, learner: "Learner"):
         if len(self.test_epoch_values) > 0:
-            values = np.array(self.agg_fn(self.test_epoch_values, 0), copy=False)
+
+            values = np.nanmean(self.test_epoch_values, 0)
 
             if self.class_labels is None: self.class_labels = list(range(len(values)))
 
             for i, (label, value) in enumerate(zip(self.class_labels, values)):
-                if i == self.bg_index: continue
                 learner.log(f'test {self.metric} - {label}', value)
 
-            if self.bg_index is not None: values[:, self.bg_index] = np.nan
+            if self.bg_index is not None: values = np.delete(values, self.bg_index)
             learner.log(f'test {self.metric} mean', np.nanmean(values))
 
             self.test_epoch_values = []
@@ -166,7 +165,6 @@ class Dice(PerClassMetric):
         bg_index=None,
         train_step: int | None = 1,
         test_step: int | None = 1,
-        agg_fn=np.mean,
         name="dice",
     ):
         super().__init__(
@@ -175,11 +173,10 @@ class Dice(PerClassMetric):
             train_step=train_step,
             test_step=test_step,
             bg_index=bg_index,
-            agg_fn=agg_fn,
         )
 
     def __call__(self, learner: "Learner"):
-        return dice(learner.preds, learner.targets).detach().cpu()
+        return dice(batched_raw_preds_to_one_hot(learner.preds), learner.targets).detach().cpu()
 
 class IOU(PerClassMetric):
     def __init__(
@@ -188,7 +185,6 @@ class IOU(PerClassMetric):
         bg_index=None,
         train_step: int | None = 1,
         test_step: int | None = 1,
-        agg_fn=np.mean,
         name="iou",
     ):
         super().__init__(
@@ -197,8 +193,7 @@ class IOU(PerClassMetric):
             train_step=train_step,
             test_step=test_step,
             bg_index=bg_index,
-            agg_fn=agg_fn,
         )
 
     def __call__(self, learner: "Learner"):
-        return iou(learner.preds, learner.targets).detach().cpu()
+        return iou(batched_raw_preds_to_one_hot(learner.preds), learner.targets).detach().cpu()

@@ -18,12 +18,10 @@ if T.TYPE_CHECKING:
 
 
 def _repeat_to_max_shape(input: torch.Tensor, max_shape: tuple[int, int]):
-    wtimes = max_shape[1] // input.shape[-1]
-    if wtimes > 1:
-        input = input.repeat_interleave(wtimes, -1)
-    htimes = max_shape[0] // input.shape[-2]
-    if htimes > 1:
-        input = input.repeat_interleave(htimes, -2)
+    max_repeats = min(max_shape[0] // input.shape[-2], max_shape[1] // input.shape[-1])
+    if max_repeats > 1:
+        input = input.repeat_interleave(max_repeats, -1)
+        input = input.repeat_interleave(max_repeats, -2)
     return input
 class Renderer(Callback):
     order = 11

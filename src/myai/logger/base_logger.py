@@ -5,11 +5,17 @@ from collections.abc import Iterator, MutableMapping, Mapping
 import numpy as np
 import torch
 
+import logging
+
 from ..plt_tools.fig import imshow, linechart, scatter, Fig
 from ..plt_tools._types import _K_Line2D, _K_Collection
 
 from ..python_tools.f2f_old import f2f_remove2_add1
 
+
+def numel(x:np.ndarray | torch.Tensor):
+    if isinstance(x, np.ndarray): return x.size
+    return x.numel()
 class BaseLogger(MutableMapping[str, T.Any], ABC):
 
     @abstractmethod
@@ -118,9 +124,23 @@ class BaseLogger(MutableMapping[str, T.Any], ABC):
     # those methods can be overridden if needed
     def save(self, filepath: str):
         """Save this logger to a compressed numpy array file (npz)."""
+        arrays = {}
+        for k in self.keys():
+            try:
+                arrays[f"__STEPS__ {k}"] = np.asarray(self.get_metric_steps(k))
+                arrays[f"__VALUES__ {k}"] = self.get_metric_as_numpy(k)
+            except Exception as e: # pylint:disable=W0718
+                logging.warning("Failed to save `%s`: %s", k, e)
+        np.savez_compressed(filepath, **arrays)
 
     def load(self, filepath: str):
         """Load data from a compressed numpy array file (npz) to this logger."""
+        arrays = np.load(filepath)
+        for k, array in arrays.items():
+            if k.startswith('__STEPS__ '):
+                name = k.replace("__STEPS__ ", "")
+                values = arrays[f"__VALUES__ {name}"]
+                self[name] = dict(zip(array, values))
 
     def plot(self, *metrics: str, **kwargs: T.Unpack[_K_Line2D]):
         fig = Fig().add()
@@ -134,3 +154,30 @@ class BaseLogger(MutableMapping[str, T.Any], ABC):
         xvals = self.get_metric_interpolate(x)
         yvals = self.get_metric_interpolate(y)
         return linechart(xvals, yvals, **kwargs).axlabels(x, y).ticks().grid()
+
+    def as_yaml_string(self):
+        text = ""
+        for key in sorted(self.keys()):
+            last = self.last(key)
+            text += f"{key}:\n"
+            text += f"    count: {len(self[key])}\n"
+            text += f"    type: {type(last)}\n"
+            if isinstance(last, (torch.Tensor, np.ndarray)) and numel(last) > 1:
+                text += f"    last dtype: {last.dtype}\n"
+                text += f"    last ndim: {last.ndim}\n"
+                text += f"    last shape: {last.shape}\n"
+                text += f"    last min: {last.min()}\n"
+                text += f"    last max: {last.max()}\n"
+                text += f"    last mean: {last.mean()}\n"
+                text += f"    last var: {last.var()}\n"
+                text += f"    last std: {last.std()}\n"
+                text += f"    elements: {numel(last)}\n"
+            elif isinstance(last, (int, float, np.ScalarType)) or (isinstance(last, (torch.Tensor, np.ndarray)) and numel(last) == 1):
+                values = self.get_metric_as_numpy(key)
+                text += f"    last value: {float(last)}\n" # type:ignore
+                text += f"    lowest: {values.min()}\n"
+                text += f"    highest: {values.max()}\n"
+                text += f"    mean: {values.mean()}\n"
+            text += "\n"
+
+        return text

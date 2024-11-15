@@ -11,3 +11,4 @@ from .stopping import StopOnStep
 
 from ...event_model import Callback, ConditionalCallback
 from .scheduler_ import scheduler
+from .checkpointing import Checkpoint

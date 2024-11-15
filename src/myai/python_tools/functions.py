@@ -52,7 +52,21 @@ def get_full_kwargs[**P2](fn: Callable[P2, T.Any], *args: P2.args, **kwargs: P2.
     sig.apply_defaults()
     return sig.arguments
 
-class SaveSignature:
-    def __init__[**K](self, obj: Callable[K, T.Any], *args: K.args, **kwargs: K.kwargs):
-        self.obj: Callable = obj
+class _NotConstructed: pass
+class SaveSignature[V]:
+    def __init__[**K](self, obj: Callable[K, V], *args: K.args, **kwargs: K.kwargs): # pylint:disable=undefined-variable
+        self.obj: Callable[..., V] = obj # pylint:disable=undefined-variable
         self.signature = get_full_kwargs(obj, *args, **kwargs)
+        for k,v in self.signature.items():
+            if isinstance(v, SaveSignature):
+                self.signature[k] = v.resolve()
+        self.constructed_obj: _NotConstructed | V = _NotConstructed() # pylint:disable=undefined-variable
+
+    def resolve(self) -> V: # pylint:disable=undefined-variable
+        if self.is_constructed: return self.constructed_obj # type:ignore
+        self.constructed_obj = self.obj(**self.signature)
+        return self.constructed_obj
+
+    @property
+    def is_constructed(self):
+        return not isinstance(self.constructed_obj, _NotConstructed)

@@ -1,20 +1,23 @@
 import torch
+from ._utils import _ensure_onehot
 
-def accuracy(y_pred: torch.Tensor, y_true: torch.Tensor):
+def accuracy(input:torch.Tensor, target:torch.Tensor, ):
     """
-    Computes the classification accuracy.
+    Computes accuracy.
 
     Parameters:
-    y_pred (torch.Tensor): (B, C) Predicted labels, where C is the number of classes (softmax output).
-    y_true (torch.Tensor): (B) or one-hot (B, C).
+    input (torch.Tensor): (B, C, *) Predicted labels, where C is the number of classes.
+    target (torch.Tensor): (B, *) or one-hot (B, C, *).
 
     Returns:
     torch.Tensor: Accuracy.
     """
-    if y_true.ndim == 2:
-        y_true = y_true.argmax(1)
+    # argmax target if not argmaxed (input is always one hot encoded)
+    if input.ndim == target.ndim:
+        target = target.argmax(1)
+
     # Compute the number of correct predictions
-    correct = torch.sum(y_pred.argmax(1) == y_true).to(torch.float32)
+    correct = torch.sum(input.argmax(1) == target, dim = list(range(1, target.ndim))).float()
 
     # Compute the accuracy
-    return correct / y_true.numel()
+    return (correct / target[0].numel()).mean()

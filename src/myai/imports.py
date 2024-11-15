@@ -15,6 +15,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
+from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torchvision.transforms import v2
 
@@ -25,7 +26,7 @@ from .event_model.callback import Callback
 from .event_model.conditional_callback import ConditionalCallback
 from .learner import *
 from .plt_tools import Fig, imshow, imshow_grid, linechart, scatter
-from .python_tools import SaveSignature as Sig
+from .python_tools.functions import SaveSignature as sig
 from .python_tools import (ShutUp, clean_mem, compose, find_file_containing,
                            flatten, get0, get1, get__name__, get_all_files,
                            getlast, identity, identity_kwargs,
