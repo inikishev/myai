@@ -21,7 +21,6 @@ class InverseDiceLoss(torch.nn.Module):
         mse_ord: int = 2,
         mse_multiplier:float = 1,
         logcosh = False,
-        mean_channels_batch = False,
         weight = None,
     ):
         """Loss based on the multiplicative inverse of the dice coefficient.
@@ -50,7 +49,6 @@ class InverseDiceLoss(torch.nn.Module):
         self.use_mse = use_mse
         self.mse_multiplier = mse_multiplier
         self.mse_ord = mse_ord
-        self.mean_channels_batch = mean_channels_batch
         self.logcosh = logcosh
 
     def forward(self, input: torch.Tensor, target: torch.Tensor):
@@ -141,5 +139,4 @@ class InverseDiceLoss(torch.nn.Module):
                 raise ValueError(f'Weights are {self.weight.shape} and dice is {loss.shape}')
             loss *= self.weight
 
-        if self.mean_channels_batch: return loss.mean()
-        else: return loss.mean(1).mean(0) # average over channels and then over batch
+        return loss.mean()

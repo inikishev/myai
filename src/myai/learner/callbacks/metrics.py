@@ -37,7 +37,7 @@ class LogLoss(Callback):
 
 class LogTime(Callback):
     order = 1000
-    def after_train_batch(self, learner: "Learner"):
+    def after_train_step(self, learner: "Learner"):
         learner.log("time", time.time())
 
 

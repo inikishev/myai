@@ -87,6 +87,8 @@ class Default(Callback):
     def log(self, learner: "Learner", metric: str, value: T.Any):
         learner.logger.log(learner.num_forwards, metric, value)
 
+
+
 class NoTarget(Callback):
     """Passes entire batch to the model, passes predictions to the loss function."""
     def closure(self, learner: "Learner", batch, backward: bool):

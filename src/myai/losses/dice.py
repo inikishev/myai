@@ -17,7 +17,6 @@ class DiceLoss(torch.nn.Module):
         square_denominator = False,
         weight = None,
         logcosh = False,
-        mean_channels_batch = False,
     ):
         """Dice loss = 1 - ((2*intersections + eps) / (sums + eps))
 
@@ -29,7 +28,6 @@ class DiceLoss(torch.nn.Module):
         :param square_denominator: _description_, defaults to False
         :param weight: _description_, defaults to None
         :param logcosh: _description_, defaults to False
-        :param mean_channels_batch: _description_, defaults to False
         """
         super().__init__()
         self.ignore_bg = ignore_bg
@@ -42,7 +40,6 @@ class DiceLoss(torch.nn.Module):
         self.jaccard = jaccard
         self.square_denominator = square_denominator
         self.logcosh = logcosh
-        self.mean_channels_batch = mean_channels_batch
 
     def forward(self, input: torch.Tensor, target: torch.Tensor):
         """
@@ -115,5 +112,4 @@ class DiceLoss(torch.nn.Module):
                 raise ValueError(f'Weights are {self.weight.shape} and dice is {loss.shape}')
             loss *= self.weight
 
-        if self.mean_channels_batch: return loss.mean()
-        else: return loss.mean(1).mean(0) # average over channels and then over batch
+        loss.mean()

@@ -1,4 +1,3 @@
-#pylint:disable=redefined-outer-name
 import itertools
 import time
 import typing as T
@@ -14,3 +13,10 @@ if T.TYPE_CHECKING:
 
 
 class NoOp(Callback): pass
+
+class NoClosure(Callback):
+    """Don't pass closure to optimizer."""
+    def enter(self, learner: "Learner"):
+        learner.set_use_closure(False)
+    def exit(self, learner: "Learner"):
+        learner.set_use_closure(True)

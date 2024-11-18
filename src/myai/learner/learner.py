@@ -63,12 +63,17 @@ class Learner(EventModel):
     ):
         super().__init__()
         self.info: dict[str, T.Any] = {"postfix": '', "info": {}}
+        """Info dictionary, which is `{'model': {'name': 'ResNet', params: {}}, ..., 'postfix': '', 'info': {}}`"""
         self.device = device
         self.accelerator: "Accelerator | T.Any" = None
         if logger is None: logger = DictLogger()
         self.logger: BaseLogger = logger
         self.name_template = name
+        """By default this is `'{model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {postfix} - {datetime}'`."""
         self.main_metric = main_metric
+        """Main metric to be used for epoch dir name, by default `test accuracy`."""
+        self.backward_kwargs = {}
+        """Kwargs to pass to backward"""
 
         self.creation_time = time.time()
         self._dirs: dict[tuple[str | None, str], str] = {}
@@ -305,7 +310,7 @@ class Learner(EventModel):
 
     def set_use_closure(self, use_closure: bool):
         """Whether to pass closure to optimizer. When Learner is created, this is set to True by default."""
-        cb: Default = self.get_callback('DefaultCB') # type:ignore
+        cb: Default = self.get_callback('Default') # type:ignore
         cb._use_closure = use_closure
 
     def state_dict(self):
@@ -441,7 +446,7 @@ class Learner(EventModel):
 
     def backward(self, loss: torch.Tensor, **kwargs):
         """Call backward on loss"""
-        self.fire_event('backward', loss, **kwargs)
+        self.fire_event('backward', loss, **kwargs, **self.backward_kwargs)
         self.fire_event('after_backward')
         if self.status == 'train': self.num_backwards += 1
 

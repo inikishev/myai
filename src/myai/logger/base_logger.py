@@ -1,16 +1,14 @@
+import logging
 import typing as T
 from abc import ABC, abstractmethod
-from collections.abc import Iterator, MutableMapping, Mapping
+from collections.abc import Iterator, Mapping, MutableMapping
 
 import numpy as np
 import torch
 
-import logging
+from ..plt_tools._types import _K_Collection, _K_Line2D
+from ..plt_tools.fig import Fig, imshow, linechart, scatter
 
-from ..plt_tools.fig import imshow, linechart, scatter, Fig
-from ..plt_tools._types import _K_Line2D, _K_Collection
-
-from ..python_tools.f2f_old import f2f_remove2_add1
 
 
 def numel(x:np.ndarray | torch.Tensor):
@@ -142,13 +140,23 @@ class BaseLogger(MutableMapping[str, T.Any], ABC):
                 values = arrays[f"__VALUES__ {name}"]
                 self[name] = dict(zip(array, values))
 
+    @classmethod
+    def from_file(cls, filepath: str):
+        """Load data from a compressed numpy array file (npz) to this logger."""
+        logger = cls()
+        logger.load(filepath)
+        return logger
+
     def plot(self, *metrics: str, **kwargs: T.Unpack[_K_Line2D]):
+        k: dict[str, T.Any] = kwargs.copy() # type:ignore # this is necesary for pylance to shut up
         fig = Fig().add()
+        ylabel = metrics[0] if len(metrics) == 1 else "value"
         for metric in metrics:
             x = list(self[metric].keys())
             y = list(self[metric].values())
-            fig.linechart(x, y, **kwargs).axlabels('step', metric).ticks().grid()
-        return fig
+            fig.linechart(x, y, label = metric, **k).axlabels('step', ylabel)
+        if len(metrics) > 1: fig.legend()
+        return fig.ticks().grid()
 
     def linechart(self, x:str, y:str, **kwargs: T.Unpack[_K_Line2D]):
         xvals = self.get_metric_interpolate(x)

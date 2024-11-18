@@ -12,7 +12,6 @@ class RescaledSquareLoss(torch.nn.Module):
         true_scale: float = 1,
         onehot_scale: float = 1,
         ignore_bg=False,
-        mean_channels_batch = False,
         weight = None,
         ord = 2,
     ):
@@ -26,14 +25,12 @@ class RescaledSquareLoss(torch.nn.Module):
         :param true_scale: Rescales loss at true label, defaults to 1
         :param onehot_scale: rescales the one-hot encoding, defaults to 1
         :param ignore_bg: Whether to ignore background, defaults to False
-        :param mean_channels_batch: _description_, defaults to False
         :param weight: Weights of ecah class, defaults to None
         """
         super().__init__()
         self.ignore_bg = ignore_bg
         if weight is not None and not isinstance(weight, torch.Tensor): weight = torch.as_tensor(weight, dtype=torch.float32)
         self.weight = weight
-        self.mean_channels_batch = mean_channels_batch
         self.true_scale = true_scale
         self.onehot_scale = onehot_scale
         self.ord = ord
@@ -68,10 +65,6 @@ class RescaledSquareLoss(torch.nn.Module):
         # make sure target has correct dtype
         target = target.to(input.dtype, copy = False)
 
-        # dims to sum over
-        spatial_dims = list(range(2, input.ndim))
-        has_spatial_dims = len(spatial_dims) > 0
-
         # multiply one-hot vector by M
         if self.onehot_scale != 1: target = target * self.onehot_scale
 
@@ -85,15 +78,17 @@ class RescaledSquareLoss(torch.nn.Module):
             true_mask = target == 1
             loss[true_mask] = loss[true_mask] * self.true_scale
 
-        # sum over spatial dimensions
-        if has_spatial_dims: loss = loss.mean(dim = spatial_dims)
-
-        # multiply loss by class weights, the loss is currently (B, C) so broadcastable into C
+        # weighted labels
         if self.weight is not None:
+
+            # make sure loss is broadcastable into C by making it (B, C)
+            spatial_dims = list(range(2, input.ndim))
+            if len(spatial_dims) > 0: loss = loss.mean(dim = spatial_dims)
+
+            # multiply by weights
             self.weight = self.weight.to(loss.device, copy=False)
             if loss.shape[-1] != len(self.weight):
                 raise ValueError(f'Weights are {self.weight.shape} and dice is {loss.shape}')
             loss *= self.weight
 
-        if self.mean_channels_batch: return loss.mean()
-        else: return loss.mean(1).mean(0) # average over channels and then over batch
+        return loss.mean()
