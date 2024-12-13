@@ -4,6 +4,7 @@ import typing as T
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import contextmanager
+from operator import attrgetter
 
 if T.TYPE_CHECKING:
     from .event_model import EventModel
@@ -15,6 +16,9 @@ class Callback(ABC):
 
     order: int | float = 0
     """Order of execution (lower order callbacks execute first)"""
+
+    _learner_text: str = ''
+    """Optional text to display at the end of the learner name."""
 
     def enter(self, __model):
         """Runs when this callback is added to the model."""
@@ -51,6 +55,5 @@ class _CallbackMethod:
     def __eq__(self, other: "_CallbackMethod"): # type:ignore
         return self.callback is other.callback
 
-def _get_order(x:_CallbackMethod):
-    """Return order, used as key function for insorting"""
-    return x.order
+
+_get_order = attrgetter('order')

@@ -25,13 +25,17 @@ class TestEpoch(ConditionalCallback):
                 self.accelerated = True
 
         prev_dl = learner.dl
+        prev_batch = learner.batch
         prev_status = learner.status
 
-        if self.dl is None: raise ValueError('Learner.dltest is None')
+        if self.dl is None: raise ValueError('dltest is None')
         learner.one_epoch(self.dl, train = False)
 
         learner.dl = prev_dl
+        learner.batch = prev_batch
         learner.status = prev_status
+
+        learner.train()
 
 def test_epoch(dl: Iterable, every: int | T.Literal['epoch'] | None, before_fit = True, after_fit = True):
     """Get a configured test epoch callback.

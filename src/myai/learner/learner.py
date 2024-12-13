@@ -1,9 +1,10 @@
+import inspect
 import os
 import time
 import typing as T
 import warnings
 from collections import abc
-import inspect
+
 import numpy as np
 import torch
 
@@ -13,11 +14,13 @@ from ..loaders.text import txtread, txtwrite
 from ..loaders.yaml import yamlread, yamlwrite
 from ..logger.base_logger import BaseLogger
 from ..logger.dict_logger import DictLogger
-from ..python_tools import (SaveSignature, get__name__, get_full_kwargs,
-                            make_dict_serializeable, epoch_to_datetime, to_valid_fname)
+from ..python_tools import (SaveSignature, epoch_to_datetime, get__name__,
+                            get_full_kwargs, make_dict_serializeable,
+                            to_valid_fname)
 from ..torch_tools import CUDA_IF_AVAILABLE, maybe_ensure_cpu_number
 from .callbacks.default import Default
 from .callbacks.scheduler_ import scheduler as _scheduler_cb
+
 DEFAULT_CALLBACKS = ()
 
 
@@ -53,23 +56,27 @@ class Learner(EventModel):
         optimizer: T.Optional[torch.optim.Optimizer | SaveSignature | T.Any] = None, # type:ignore
         scheduler: T.Optional[torch.optim.lr_scheduler.LRScheduler | SaveSignature | T.Any] = None,
 
-        device = CUDA_IF_AVAILABLE,
+        device: T.Any = CUDA_IF_AVAILABLE,
         logger: T.Optional[BaseLogger] = None,
 
-        name: str = '{model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {postfix} - {datetime}',
+        name: str = '{prefix} {model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {cbtext} {postfix} - {datetime}',
         main_metric: str = 'test accuracy',
 
         default_callbacks: Callback | abc.Iterable[Callback] = Default(),
     ):
         super().__init__()
-        self.info: dict[str, T.Any] = {"postfix": '', "info": {}}
-        """Info dictionary, which is `{'model': {'name': 'ResNet', params: {}}, ..., 'postfix': '', 'info': {}}`"""
+        self.info: dict[str, T.Any] = {"info": {}}
+        """Info dictionary, which is `{'model': {'name': 'ResNet', params: {}}, ..., 'info': {}}`"""
+        self.prefix = ''
+        """Prefix for the name"""
+        self.postfix = ''
+        """Postfix for the name"""
         self.device = device
         self.accelerator: "Accelerator | T.Any" = None
         if logger is None: logger = DictLogger()
         self.logger: BaseLogger = logger
         self.name_template = name
-        """By default this is `'{model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {postfix} - {datetime}'`."""
+        """By default this is `'{prefix} {model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {cbtext} {postfix} - {datetime}'`."""
         self.main_metric = main_metric
         """Main metric to be used for epoch dir name, by default `test accuracy`."""
         self.backward_kwargs = {}
@@ -178,7 +185,12 @@ class Learner(EventModel):
 
     def set_postfix(self, postfix: str):
         """Set postfix which may be used in the name. Can use `{}`."""
-        self.info['postfix'] = postfix
+        self.postfix = postfix
+        return self
+
+    def set_prefix(self, prefix: str):
+        """Set postfix which may be used in the name. Can use `{}`."""
+        self.prefix = prefix
         return self
 
     def get_main_metric(self):
@@ -197,7 +209,7 @@ class Learner(EventModel):
         # get from self.info
         if base in self.info:
             if 'name' in self.info[base]:
-                if attr is None: return self.info[base]['name']
+                if attr is None: return str(self.info[base]['name'])
                 else:
                     if 'params' in self.info[base] and attr in self.info[base]['params']: return str(self.info[base]['params'][attr])
                     elif attr in self.info[base]: return str(self.info[base][attr])
@@ -211,7 +223,10 @@ class Learner(EventModel):
         # get from logger
         elif base == 'logger':
             if attr is None: raise ValueError(f'Invalid template: {s}, {attr} not found in logger')
-            elif attr in self.logger: return self.logger.last(attr)
+            elif attr in self.logger: 
+                v = maybe_ensure_cpu_number(self.logger.last(attr))
+                if isinstance(v, float): v = f'{v:.4f}'
+                return str(v)
             else: return ''
 
         # get some other attribute
@@ -221,6 +236,12 @@ class Learner(EventModel):
                 v = maybe_ensure_cpu_number(self.get_main_metric())
                 if isinstance(v, float): v = f'{v:.4f}'
                 return str(v)
+            elif base == 'prefix':
+                return self.process_template(self.prefix)
+            elif base == 'postfix':
+                return self.process_template(self.postfix)
+            elif base == 'cbtext':
+                return ' '.join(cb._learner_text for cb in self.callbacks)
             elif base in dir(self):
                 v = getattr(self, base)
                 if v is not None: return str(v)
@@ -231,13 +252,17 @@ class Learner(EventModel):
         """Processes a template like `'{total_epochs} {logger.test loss} {main_metric}'`"""
         template = template.replace('{{', '__BRACEOPEN__').replace('}}', '__BRACECLOSE__')
         # "stuff {attr1} {attr2}"
-        starts = template.split('{')
-        for i, s in enumerate(starts.copy()):
-            if '}' in s:
-                interp = s[:s.find('}')]
-                starts[i] = starts[i].replace(f'{interp}}}', self._process_interp_template(interp))
+        if template.count('{') != 0:
+            starts = template.split('{')
 
-        string = ''.join(starts).replace('__BRACEOPEN__', '{').replace('__BRACECLOSE__', '}')
+            for i, s in enumerate(starts.copy()):
+                if '}' in s:
+                    interp = s[:s.find('}')]
+                    starts[i] = starts[i].replace(f'{interp}}}', self._process_interp_template(interp))
+
+            string = ''.join(starts).replace('__BRACEOPEN__', '{').replace('__BRACECLOSE__', '}')
+        else:
+            string = template
         while '  ' in string: string = string.replace('  ', ' ')
         return string.strip()
 
@@ -280,7 +305,7 @@ class Learner(EventModel):
         return dir
 
 
-    def get_epoch_dir(self, root: str = 'runs', epoch_template = '{total_epochs} {logger.test loss} {main_metric}', prefix = None, postfix=None):
+    def get_epoch_dir(self, root: str = 'runs', epoch_template = '{total_epochs} {cur_batch} {logger.test loss} {main_metric}', prefix = None, postfix=None):
         """Creates a directory if it doesn't exist and returns the path. The path is `root/name(/prefix)/epoch(/postfix)`"""
         # get root dir
         dir = self.get_learner_dir(root)

@@ -228,7 +228,8 @@ class Render2DSegmentationVideo(_BatchCatVideoCallback):
         binary_threshold = 0.5,
         alpha = 0.3,
         norm_to: tuple[float, float] | T.Literal['targets'] | None = None,
-        id = 0
+        id = 0,
+        rgb_idxs = (0,1,2),
     ):
         """This saves:
         1. inputs
@@ -255,6 +256,7 @@ class Render2DSegmentationVideo(_BatchCatVideoCallback):
         self.alpha = alpha
         self.inputs_grid = inputs_grid
         self.overlay_channel = overlay_channel
+        self.rgb_idxs = rgb_idxs
 
     def after_forward(self, learner: "Learner"):
         if learner.status == 'train' and self.n is not None:
@@ -274,7 +276,10 @@ class Render2DSegmentationVideo(_BatchCatVideoCallback):
 
                 # add raw preds
                 if self.show_raw_preds: self._add(learner, preds, channel_grid=True)
-                if self.show_raw_preds_rgb: self._add(learner, preds, channel_grid=False)
+                if self.show_raw_preds_rgb:
+                    rgb_idxs = [i for i in self.rgb_idxs if i < preds.shape[1]]
+                    rgb_preds = preds[:,rgb_idxs]
+                    self._add(learner, rgb_preds, channel_grid=False)
 
                 # add binary preds
                 if self.show_binary_preds:

@@ -31,8 +31,8 @@ def imread_imageio(path):
 def imread_pil(path:str) -> np.ndarray:
     return np.array(PIL.Image.open(path))
 
-def imreadtensor_torchvision(path:str) -> torch.Tensor:
-    return torchvision.io.read_image(path)
+def imreadtensor_torchvision(path:str, dtype=None, device=None) -> torch.Tensor:
+    return torchvision.io.read_image(path).to(dtype=dtype, device=device, copy=False)
 
 def imreadtensor_skimage(path:str) -> torch.Tensor:
     return torch.as_tensor(imread_skimage(path))
@@ -50,14 +50,14 @@ def imread(path, fns = (imread_pil, imread_plt, imread_cv2, imread_skimage, imre
             if i == len(fns) - 1: raise e
     raise ValueError("Could not read image")
 
-def imreadtensor(path:str):
+def imreadtensor(path:str, dtype=None, device=None):
     if path.lower().endswith(('jpg', 'jpeg', 'png', 'gif')):
         try:
-            return imreadtensor_torchvision(path)
+            return imreadtensor_torchvision(path, dtype=dtype, device=device)
         except Exception:
-            return torch.as_tensor(imread(path))
+            return torch.as_tensor(imread(path), dtype=dtype, device=device).moveaxis(-1, 0)
     else:
-        return torch.as_tensor(imread(path))
+        return torch.as_tensor(imread(path), dtype=dtype, device=device).moveaxis(-1, 0)
 
 def imwrite(x:np.ndarray | torch.Tensor, outfile:str, mkdir=False, normalize=True, compression = 9, optimize=True):
     """if normalize is False, x must be a UINT8 IMAGE WITH VALUES FROM 0 TO 255"""

@@ -1,5 +1,6 @@
 import numpy as np
 import pedalboard
+import torch
 
 def audioread(path) -> tuple[np.ndarray, int]:
     """Returns audio and sr"""
@@ -7,3 +8,8 @@ def audioread(path) -> tuple[np.ndarray, int]:
         audio = f.read(f.frames)
         sr = f.samplerate
     return audio, sr
+
+def audioreadtensor(path) -> tuple[torch.Tensor, int]:
+    """Returns audio and sr"""
+    audio, sr = audioread(path)
+    return torch.from_numpy(audio), sr

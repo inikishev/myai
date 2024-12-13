@@ -4,9 +4,10 @@ import typing as T
 import warnings
 from collections import abc
 
+import numpy as np
 import torch
 from fastprogress import master_bar, progress_bar
-
+from scipy.signal import convolve
 from ...event_model import Callback
 
 if T.TYPE_CHECKING:
@@ -22,6 +23,7 @@ class FastProgress(Callback):
         bar_sec: float = 1,
         plot_sec: float = 10,
         ybounds: T.Optional[tuple[float | None, float | None] | abc.Sequence[float | None]] = None,
+        smooth: abc.Mapping[str, int] | None = None,
     ):
         self.metrics = metrics
         self.bar_step = bar_sec
@@ -29,6 +31,8 @@ class FastProgress(Callback):
         self.last_bar_update = time.time()
         self.last_plot_update = self.last_bar_update
         self.ybounds = ybounds
+        if smooth is None: self.smooth = {}
+        else: self.smooth = smooth
         self.initialized = False
 
     def before_fit(self, learner: "Learner"):
@@ -39,13 +43,26 @@ class FastProgress(Callback):
         graphs = []
         for name in self.metrics:
             if name in learner.logger:
-                graphs.append([list(learner.logger[name].keys()), list(learner.logger[name].values())])
+
+                # smooth a graph if it is in self.smooth
+                if name in self.smooth:
+                    smooth_length = self.smooth[name]
+                    y = np.array(list(learner.logger[name].values()))
+                    # only smooth when it is long enough
+                    if smooth_length * 2 < len(y):
+                        y[smooth_length:-smooth_length] = convolve(y, np.ones(self.smooth[name]) / self.smooth[name], mode="valid")
+                    graphs.append([list(learner.logger[name].keys()), y])
+
+                # no smoothing
+                else:
+                    graphs.append([list(learner.logger[name].keys()), list(learner.logger[name].values())])
+
             elif learner.total_epochs >= 1: # to avoid triggering this on 1st epoch when metrics havent been created
                 warnings.warn(f"metric {name} not found in logger")
 
         self.mb.update_graph(graphs, None, self.ybounds)
 
-    def after_any_step(self, learner: "Learner"):
+    def after_train_step(self, learner: "Learner"):
         if not self.initialized:
             self.pb.update(0) # required
             self.initialized = True

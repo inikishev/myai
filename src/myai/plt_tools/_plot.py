@@ -150,11 +150,13 @@ class _Plot:
             if x.shape[0] < x.shape[2]: x = x.argmax(0)
             else: x = x.argmax(-1)
 
+        if x.ndim < 2: raise ValueError(f'Got x of shape {x.shape}')
+
         segm = make_segmentation_overlay(x, colors = colors, bg_index = bg_index) * 255
         segm = torch.cat([segm, torch.zeros_like(segm[0, None])], 0)
         segm[3] = torch.where(segm[:3].amax(0) > torch.tensor(0), torch.tensor(int(alpha*255)), torch.tensor(bg_alpha))
 
-        self.ax.imshow(segm.permute(1,2,0), **kwargs)
+        self.ax.imshow(segm.permute(1,2,0).to(torch.uint8), **kwargs)
         return self
 
 

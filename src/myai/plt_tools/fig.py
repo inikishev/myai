@@ -11,6 +11,7 @@ from ..python_tools import Compose
 from ..python_tools.f2f import (func2func, func2method, method2func,
                                 method2method, method2method_return_override)
 from ._plot import _Plot
+from ._types import _K_Text
 
 _Fig: T.TypeAlias = "Fig"
 
@@ -117,6 +118,7 @@ class Fig:
         edgecolor: T.Any | None = None,
         frameon: bool = True,
         layout: T.Literal["constrained", "compressed", "tight", "none"] | None = 'compressed',
+        **label_kwargs: T.Unpack[_K_Text],
     ):
         # distribute rows and cols
         if ncols is None:
@@ -172,8 +174,7 @@ class Fig:
                 ax.set_axis_off()
 
             if label is not None:
-                legend = True
-                plot.axtitle(label)
+                plot.axtitle(label, **label_kwargs)
 
     def clear(self):
         self.plots = []
@@ -199,9 +200,7 @@ def imshow_grid(images, labels = None, norm = 'norm', cmap = 'gray', **kwargs) -
 
     fig = Fig()
     for image, label in zip(images, labels):
-        fig.add().imshow(image, norm = norm, cmap = cmap, **kwargs)
-        if label is not None: fig.axtitle(label)
+        fig.add(label).imshow(image, norm = norm, cmap = cmap, **kwargs).set_axis_off()
 
-    fig.set_axis_off()
     return fig
 

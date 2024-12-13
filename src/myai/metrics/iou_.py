@@ -14,8 +14,16 @@ def iou(input:torch.Tensor, target:torch.Tensor,):
     returns: vector of len C with iou per each channel
     """
     input, target = _ensure_onehot(input, target)
+    input = input.bool()
+    target = target.bool()
 
-    intersection = (input & target).sum(list(range(2, target.ndim)))
-    union = (input | target).sum(list(range(2, target.ndim)))
-    
+    spatial_dims = list(range(2, target.ndim))
+
+    intersection = input & target
+    union = input | target
+
+    if len(spatial_dims) > 0:
+        intersection = intersection.sum(spatial_dims, dtype=torch.float32)
+        union = union.sum(spatial_dims, dtype=torch.float32)
+
     return (intersection / union).nanmean(0) # mean along batch dim but not channel dim

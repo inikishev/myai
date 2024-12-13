@@ -99,6 +99,16 @@ class NoTarget(Callback):
             learner.backward(loss)
         return loss
 
+class InputIsTarget(Callback):
+    """Passes entire batch to the model, passes inputs and predictions to the loss function."""
+    def closure(self, learner: "Learner", batch, backward: bool):
+        preds = learner.forward(batch)
+        loss = learner.get_loss(preds, batch)
+        if backward:
+            learner.zero_grad()
+            learner.backward(loss)
+        return loss
+
 class Triplet(Callback):
     """Batch must be a length 3 sequence of anchor, positive and negative samples."""
     def closure(self, learner: "Learner", batch, backward: bool):

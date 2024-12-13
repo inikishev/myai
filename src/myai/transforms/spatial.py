@@ -1,9 +1,12 @@
-from typing import Optional, Any
-from collections.abc import Sequence
 import random
-import torch, numpy as np
+from collections.abc import Sequence
+from typing import Any, Optional
 
-from ._base import Transform, RandomTransform
+import numpy as np
+import torch
+from torchvision.transforms import v2
+
+from ._base import RandomTransform, Transform
 
 __all__ = [
     "randflip",
@@ -16,6 +19,8 @@ __all__ = [
     "RandRot90t",
     "fast_slice_reduce_size",
     "FastSliceReduceSize",
+    "resize_to_fit",
+    "resize_to_contain",
 ]
 def randflip(x:torch.Tensor):
     flip_dims = random.sample(population = range(1, x.ndim), k = random.randint(1, x.ndim-1))
@@ -100,3 +105,41 @@ class FastSliceReduceSizet(RandomTransform):
         self.min_shape = min_shape
         self.p = p
     def forward(self, x:Sequence[torch.Tensor]): return fast_slice_reduce_sizet(x, self.min_shape)
+
+
+def resize_to_fit(
+    image: torch.Tensor,
+    size: int,
+    interpolation: v2.InterpolationMode = v2.InterpolationMode.BILINEAR,
+    antialias=True,
+):
+    """Image must be (C, H, W). Resizes so that larger side is `size`."""
+    largest = max(image.shape[1:])
+    factor = size / largest
+    return v2.functional.resize(
+        image,
+        size = [min(int(image.shape[1]*factor), size), min(int(image.shape[2]*factor), size)],
+        interpolation=interpolation,
+        antialias=antialias,
+    )
+
+def resize_to_contain(
+    image: torch.Tensor,
+    size: int,
+    interpolation: v2.InterpolationMode = v2.InterpolationMode.BILINEAR,
+    antialias=True,
+):
+    """Image must be (C, H, W). Resizes so that smaller side is `size`."""
+    smallest = min(image.shape[1:])
+    factor = size / smallest
+
+    if image.shape[1] >= image.shape[2]:
+        imsize =  [int(image.shape[1]*factor), size]
+    else:
+        imsize = [size, int(image.shape[2]*factor)]
+    return v2.functional.resize(
+        image,
+        size = imsize,
+        interpolation=interpolation,
+        antialias=antialias,
+    )

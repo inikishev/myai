@@ -33,7 +33,7 @@ def overlay_segmentation(x: torch.Tensor | np.ndarray, seg:torch.Tensor | np.nda
     """_summary_
 
     :param x: Tensor to put segmentation onto. Must be `(C, *)`. Will be converted to `(3, *)`.
-    :param seg: Binarized segmentation broadcastable into x.
+    :param seg: Binarized (without C dimension) segmentation broadcastable into x.
     :param alpha: Low alpha means segmentation is more transparent, defaults to 0.5
     :param colors: List of tuples of three numbers from 0 to 1, color names, or None, defaults to None
     """
@@ -46,14 +46,15 @@ def overlay_segmentation(x: torch.Tensor | np.ndarray, seg:torch.Tensor | np.nda
 
     # generate colors if None
     if colors is None:
-        colors = []
+        colors = [(1., 0., 0.), (0., 1., 0.), (0., 0., 1.)]
         n = 2
         while len(colors) < n_classes:
             colors = list(itertools.product(np.linspace(0, 1, n), repeat=3))
             if (0., 0., 0.) in colors: colors.remove((0., 0., 0.)) # remove black
             if (1., 1., 1.) in colors: colors.remove((1., 1., 1.)) # remove white
             n += 1
-
+    
+    if isinstance(colors, str): colors = [colors]
     colors = [torch.tensor(COLORS[i.lower().strip()] if isinstance(i, str) else i, dtype=x.dtype, device=x.device) for i in colors]
     min = x.min(); max = x.max()
     if min != max: colors = [i * (max - min) + min for i in colors]

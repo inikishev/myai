@@ -37,7 +37,7 @@ def get_learner(
     callbacks = [
         CB.StopOnStep(max_steps),
         CB.LogTime(),
-        CB.LogLoss(),
+        CB.Loss(),
         CB.Accelerate(),
         CB.Dice(['bg', 'necrosis', 'edema', 'tumor', 'resection'], train_step=8, bg_index=0),
         CB.PerformanceTweaks(True),
@@ -58,6 +58,7 @@ def get_learner(
                 activation=None,
                 inputs_grid=True,
                 overlay_channel=1,
+                rgb_idxs=(1,2,3),
             ),
         ]
         )

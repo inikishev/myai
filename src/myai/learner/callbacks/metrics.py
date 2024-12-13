@@ -9,14 +9,14 @@ import torch
 
 from ...event_model import Callback
 from ...torch_tools.conversion import maybe_ensure_detach_cpu
-from ...metrics import accuracy, dice, iou
+from ...metrics import accuracy, dice, iou, binary_accuracy
 from ...torch_tools import batched_raw_preds_to_one_hot
 
 if T.TYPE_CHECKING:
     from ..learner import Learner
 
 
-class LogLoss(Callback):
+class Loss(Callback):
     order = -1
     def __init__(self, agg_fn = np.mean, name = 'loss'):
         self.test_losses = []
@@ -37,8 +37,12 @@ class LogLoss(Callback):
 
 class LogTime(Callback):
     order = 1000
+    def __init__(self):
+        self.start_time = None
     def after_train_step(self, learner: "Learner"):
-        learner.log("time", time.time())
+        t = time.time()
+        if self.start_time is None: self.start_time = t
+        learner.log("time", t-self.start_time)
 
 
 class Metric(Callback, ABC):
@@ -82,7 +86,15 @@ class Accuracy(Metric):
         super().__init__(name, train_step, test_step, agg_fn)
 
     def __call__(self, learner: "Learner") -> float:
-        return accuracy(learner.preds, learner.targets).detach().cpu().item()
+        return accuracy(batched_raw_preds_to_one_hot(learner.preds), learner.targets).detach().cpu().item()
+
+class BinaryAccuracy(Metric):
+    def __init__(self, threshold, train_step: int | None = 1, test_step: int | None = 1, agg_fn = np.mean, name = 'accuracy'):
+        super().__init__(name, train_step, test_step, agg_fn)
+        self.threshold = threshold
+
+    def __call__(self, learner: "Learner") -> float:
+        return binary_accuracy(learner.preds > self.threshold, learner.targets.bool()).detach().cpu().item()
 
 class PerClassMetric(Callback, ABC):
     order = -1
@@ -167,6 +179,15 @@ class Dice(PerClassMetric):
         test_step: int | None = 1,
         name="dice",
     ):
+        """Dice metric. For binary and multiclass.
+
+        Args:
+            class_labels (_type_, optional): _description_. Defaults to None.
+            bg_index (_type_, optional): _description_. Defaults to None.
+            train_step (int | None, optional): _description_. Defaults to 1.
+            test_step (int | None, optional): _description_. Defaults to 1.
+            name (str, optional): _description_. Defaults to "dice".
+        """
         super().__init__(
             metric=name,
             class_labels=class_labels,

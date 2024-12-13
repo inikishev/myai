@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-def tonumpy(x):
+def tonumpy(x) -> np.ndarray:
     if isinstance(x, torch.Tensor):
         return x.detach().cpu().numpy()
     return np.array(x, copy=False)

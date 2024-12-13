@@ -39,7 +39,7 @@ class EventModel:
 
             # insort callback into the events dict
             if name not in events: events[name] = []
-            bisect.insort(events[name], _CallbackMethod(callback, method), key = _get_order)
+            bisect.insort_right(events[name], _CallbackMethod(callback, method), key = _get_order)
 
         self.callbacks.add(callback)
         callback.enter(self)
