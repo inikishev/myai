@@ -13,8 +13,8 @@ from ..python_tools.f2f import (func2func, method2func, method2method,
 from ..torch_tools import make_segmentation_overlay
 from ..torch_tools.conversion import (ensure_numpy_or_none_recursive,
                                       ensure_numpy_recursive,
-                                      maybe_ensure_detach_cpu,
-                                      maybe_ensure_detach_cpu_recursive)
+                                      maybe_detach_cpu,
+                                      maybe_detach_cpu_recursive)
 from ..transforms import totensor
 from ._norm import _normalize
 from ._types import _FontSizes, _K_Collection, _K_Figure, _K_Line2D, _K_Text
@@ -103,8 +103,8 @@ class _Plot:
     ):
         x = ensure_numpy_recursive(x)
         y = ensure_numpy_recursive(y)
-        c = maybe_ensure_detach_cpu_recursive(c)
-        s = maybe_ensure_detach_cpu_recursive(s)
+        c = maybe_detach_cpu_recursive(c)
+        s = maybe_detach_cpu_recursive(s)
 
         loc = locals().copy()
         del loc["self"]
@@ -144,7 +144,7 @@ class _Plot:
         bg_alpha:float = 0.,
         **kwargs,
     ):
-        x = totensor(maybe_ensure_detach_cpu_recursive(x), dtype=torch.float32).squeeze()
+        x = totensor(maybe_detach_cpu_recursive(x), dtype=torch.float32).squeeze()
         # argmax if not argmaxed
         if x.ndim == 3:
             if x.shape[0] < x.shape[2]: x = x.argmax(0)

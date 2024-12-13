@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 from ...event_model import Callback
-from ...torch_tools.conversion import maybe_ensure_detach_cpu
+from ...torch_tools.conversion import maybe_detach_cpu
 from ...metrics import accuracy, dice, iou, binary_accuracy
 from ...torch_tools import batched_raw_preds_to_one_hot
 

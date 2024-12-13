@@ -17,7 +17,7 @@ from ..logger.dict_logger import DictLogger
 from ..python_tools import (SaveSignature, epoch_to_datetime, get__name__,
                             get_full_kwargs, make_dict_serializeable,
                             to_valid_fname)
-from ..torch_tools import CUDA_IF_AVAILABLE, maybe_ensure_cpu_number
+from ..torch_tools import CUDA_IF_AVAILABLE, maybe_ensure_pynumber
 from .callbacks.default import Default
 from .callbacks.scheduler_ import scheduler as _scheduler_cb
 
@@ -224,7 +224,7 @@ class Learner(EventModel):
         elif base == 'logger':
             if attr is None: raise ValueError(f'Invalid template: {s}, {attr} not found in logger')
             elif attr in self.logger: 
-                v = maybe_ensure_cpu_number(self.logger.last(attr))
+                v = maybe_ensure_pynumber(self.logger.last(attr))
                 if isinstance(v, float): v = f'{v:.4f}'
                 return str(v)
             else: return ''
@@ -233,7 +233,7 @@ class Learner(EventModel):
         else:
             if base == 'datetime': return epoch_to_datetime(self.creation_time).strftime("%Y.%m.%d %H-%M-%S")
             elif base == 'main_metric':
-                v = maybe_ensure_cpu_number(self.get_main_metric())
+                v = maybe_ensure_pynumber(self.get_main_metric())
                 if isinstance(v, float): v = f'{v:.4f}'
                 return str(v)
             elif base == 'prefix':

@@ -4,10 +4,10 @@ import numpy as np
 import torch
 
 @T.overload
-def maybe_ensure_detach_cpu(x: torch.Tensor) -> torch.Tensor: ...
+def maybe_detach_cpu(x: torch.Tensor) -> torch.Tensor: ...
 @T.overload
-def maybe_ensure_detach_cpu[X](x: X) -> X: ...
-def maybe_ensure_detach_cpu[X](x: X) -> torch.Tensor | X:
+def maybe_detach_cpu[X](x: X) -> X: ...
+def maybe_detach_cpu[X](x: X) -> torch.Tensor | X:
     """If x is torch.tensor, ensures it is on CPU and detached. Otherwise returns x as is."""
     if isinstance(x, torch.Tensor):
         return x.detach().cpu()
@@ -26,7 +26,8 @@ def ensure_numpy_or_none(x: None) -> None: ...
 @T.overload
 def ensure_numpy_or_none(x: np.ndarray) -> np.ndarray: ...
 def ensure_numpy_or_none(x: torch.Tensor | np.ndarray | None) -> np.ndarray | None:
-    """Converts x to numpy array if it is not already one. If tensor, ensures it is detached and on CPU. If None, returns None."""
+    """Converts x to numpy array if it is not already one. If tensor, ensures it is detached and on CPU.
+    If None, returns None."""
     if x is None: return None
     if isinstance(x, torch.Tensor):
         return x.detach().cpu().numpy()
@@ -34,15 +35,16 @@ def ensure_numpy_or_none(x: torch.Tensor | np.ndarray | None) -> np.ndarray | No
 
 
 @T.overload
-def maybe_ensure_cpu_number(x: torch.Tensor | np.ndarray) -> np.ndarray | float | int: ...
+def maybe_ensure_pynumber(x: torch.Tensor | np.ndarray) -> np.ndarray | float | int: ...
 @T.overload
-def maybe_ensure_cpu_number(x: int) -> int: ...
+def maybe_ensure_pynumber(x: int) -> int: ...
 @T.overload
-def maybe_ensure_cpu_number(x: float) -> float: ...
+def maybe_ensure_pynumber(x: float) -> float: ...
 @T.overload
-def maybe_ensure_cpu_number[X](x: X) -> X: ...
-def maybe_ensure_cpu_number[X](x: int | float | torch.Tensor | np.ndarray | X) -> np.ndarray | int | float | X:
-    """Size one arrays and tensors are returned as python scalar types. Tensors are converted to numpy arrays. Anything else returned as is."""
+def maybe_ensure_pynumber[X](x: X) -> X: ...
+def maybe_ensure_pynumber[X](x: int | float | torch.Tensor | np.ndarray | X) -> np.ndarray | int | float | X:
+    """Size one arrays and tensors are returned as python scalar types.
+    Tensors are converted to numpy arrays. Anything else returned as is."""
     if isinstance(x, np.ndarray):
         if x.size == 1: return x.item()
         return x
@@ -54,25 +56,25 @@ def maybe_ensure_cpu_number[X](x: int | float | torch.Tensor | np.ndarray | X) -
 
 
 @T.overload
-def maybe_ensure_detach_cpu_recursive(x: torch.Tensor) -> torch.Tensor: ...
+def maybe_detach_cpu_recursive(x: torch.Tensor) -> torch.Tensor: ...
 @T.overload
-def maybe_ensure_detach_cpu_recursive[K](x: abc.Mapping[K, torch.Tensor | T.Any]) -> dict[K, torch.Tensor | T.Any]: ...
+def maybe_detach_cpu_recursive[K](x: abc.Mapping[K, torch.Tensor | T.Any]) -> dict[K, torch.Tensor | T.Any]: ...
 @T.overload
-def maybe_ensure_detach_cpu_recursive(x: abc.MutableSequence[torch.Tensor | T.Any]) -> list[torch.Tensor | T.Any]: ...
+def maybe_detach_cpu_recursive(x: abc.MutableSequence[torch.Tensor | T.Any]) -> list[torch.Tensor | T.Any]: ...
 @T.overload
-def maybe_ensure_detach_cpu_recursive(x: tuple[torch.Tensor | T.Any]) -> tuple[torch.Tensor | T.Any]: ...
+def maybe_detach_cpu_recursive(x: tuple[torch.Tensor | T.Any]) -> tuple[torch.Tensor | T.Any]: ...
 @T.overload
-def maybe_ensure_detach_cpu_recursive[V](x: V) -> V: ...
-def maybe_ensure_detach_cpu_recursive(x):
+def maybe_detach_cpu_recursive[V](x: V) -> V: ...
+def maybe_detach_cpu_recursive(x):
     """Recursively detaches and moves x or all elements in x to CPU. Can be slow!"""
     if isinstance(x, torch.Tensor):
         return x.detach().cpu()
     elif isinstance(x, abc.Mapping):
-        return {k: maybe_ensure_detach_cpu_recursive(v) for k, v in x.items()}
+        return {k: maybe_detach_cpu_recursive(v) for k, v in x.items()}
     elif isinstance(x, abc.MutableSequence):
-        return [maybe_ensure_detach_cpu_recursive(v) for v in x]
+        return [maybe_detach_cpu_recursive(v) for v in x]
     elif isinstance(x, abc.Sequence):
-        return tuple(maybe_ensure_detach_cpu_recursive(v) for v in x)
+        return tuple(maybe_detach_cpu_recursive(v) for v in x)
     return x
 
 def ensure_numpy_recursive(x) -> np.ndarray:

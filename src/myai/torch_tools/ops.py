@@ -13,10 +13,12 @@ def center_of_mass(feature:torch.Tensor):
     COM computes the center of mass of the input 4D or 5D image
     To use COM in a tensorflow model, use layers.Lambda
     Arguments:
-        feature: input image of 5D tensor with format [batch,x,y,z,channel]
-                    or 4D tensor with format [batch,x,y,channel]
+        feature: input image of 5D tensor with format [batch,channel,x,y,z]
+                    or 4D tensor with format [batch,channel,x,y]
         nx,ny,nz: dimensions of the input image, if using 4D tensor, nz = None
     '''
+    feature = feature.moveaxis(1, -1) # move channels last
+
     if feature.ndim == 3: nx, ny, nz = feature.shape
     elif feature.ndim == 2: nx, ny = feature.shape
     else: raise NotImplementedError

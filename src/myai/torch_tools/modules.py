@@ -1,3 +1,4 @@
+import typing
 import torch
 
 def is_container(mod:torch.nn.Module):
@@ -23,7 +24,7 @@ def count_buffers(module:torch.nn.Module):
     return sum(b.numel() for b in module.buffers())
 
 
-def replace_layers_(model:torch.nn.Module, old:type, new:torch.nn.Module):
+def replace_layers_(model:torch.nn.Module, old:type, new:typing.Callable[..., torch.nn.Module]):
     """https://www.kaggle.com/code/ankursingh12/why-use-setattr-to-replace-pytorch-layers"""
     for n, module in model.named_children():
         if len(list(module.children())) > 0:
@@ -32,7 +33,7 @@ def replace_layers_(model:torch.nn.Module, old:type, new:torch.nn.Module):
 
         if isinstance(module, old):
             ## simple module
-            setattr(model, n, new)
+            setattr(model, n, new())
 
 def replace_conv_(model:torch.nn.Module, old:type, new:type):
     """Bias always True!!!"""
