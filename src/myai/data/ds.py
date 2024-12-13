@@ -59,6 +59,7 @@ class DS[R](abc.Sequence[R]):
     def shutdown(self):
         if self._executor is not None:
             self._executor.shutdown(wait=True)
+            self._executor = None
 
     def __getitem__(self, idx) -> R: # type:ignore
         return self.samples[self.idxs[idx]]()
