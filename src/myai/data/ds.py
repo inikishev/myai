@@ -56,13 +56,16 @@ class DS[R](abc.Sequence[R]):
         if n_threads > 0: self._executor = concurrent.futures.ThreadPoolExecutor(n_threads)
         else: self._executor = None
 
+    def shutdown(self):
+        if self._executor is not None:
+            self._executor.shutdown(wait=True)
+
     def __getitem__(self, idx) -> R: # type:ignore
         return self.samples[self.idxs[idx]]()
 
     def __getitems__(self, indexes: abc.Iterable[int]) -> list[R]:
         if self._executor is not None:
-            with self._executor as ex:
-                return list(ex.map(lambda i: self.samples[self.idxs[i]](), indexes))
+            return list(self._executor.map(lambda i: self.samples[self.idxs[i]](), indexes))
 
         return [self.samples[self.idxs[i]]() for i in indexes]
 

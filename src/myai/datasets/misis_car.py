@@ -1,6 +1,7 @@
 """15561 images, original was 3×480×640 but I resized to 3×240×320 and saved in float16 so that it fits into memory.
+LOADER IS SET TO CAST TO FLOAT32.
 entire dataset is znormalized per channel.
-10 classes, each image has integer label 0 to 9. LOADER IS SET TO CAST TO FLOAT32"""
+10 classes, each image has integer label 0 to 9"""
 import csv
 import itertools
 import os

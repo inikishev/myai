@@ -53,7 +53,7 @@ class _TorchvisionClassificationDataset:
 
 
 MNIST = _TorchvisionClassificationDataset('MNIST', torchvision.datasets.MNIST)
-"""70,000 images 1×28×28, entire dataset is znormalized. Each image has integer label 0 to 9.
+"""70,000 images (1, 28, 28), entire dataset is znormalized. Each image has integer label 0 to 9.
 First 60,000 samples are commonly used as train set."""
 CIFAR10 = _TorchvisionClassificationDataset('CIFAR10', torchvision.datasets.CIFAR10)
-"""havent saved yet"""
+"""60,000 (3, 32, 32) znormalized per channel, labels 0 to 9, first 50,000 for train set"""
