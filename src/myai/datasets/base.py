@@ -1,38 +1,31 @@
+"""This used to be a class now its just a template for a dataset."""
 import os
-from abc import ABC
+import typing
 
 import numpy as np
 import torch
-from torchvision.transforms import v2
 
-from ..data import DS
+DATASETS_ROOT = r'E:\datasets'
+root: str = '???'
 
-ROOT = r'E:\datasets'
-class Dataset(ABC):
-    root: str
 
-    def __init__(self):
-        pass
+def _make(*args, **kwargs) -> torch.Tensor | list[torch.Tensor] | typing.Any:
+    """download or create the dataset and stack it into arrays, return the arrays."""
+    raise NotImplementedError
 
-    def _make(self, *args, **kwargs):
-        """Stacks entire dataset into arrays. Downloads if needed/possible"""
-        raise NotImplementedError
+def _save(*args, **kwargs):
+    """save dataset arrays to disk for fast loading."""
+    images, labels = _make()
+    np.savez_compressed(os.path.join(root, 'train.npz'), images=images, labels = labels)
 
-    def _save(self, *args, **kwargs):
-        """Saves dataset to disk"""
-        raise NotImplementedError
+def get(*args, **kwargs):
+    """load dataset saved by `_save`."""
+    raise NotImplementedError
 
-    def get(self, *args, **kwargs):
-        """Returns a DS"""
-        raise NotImplementedError
+def make_val_submission(outfile, model, *args, **kwargs):
+    """make a submission file"""
+    raise NotImplementedError
 
-    def make_val_submission(self, outfile, model, *args, **kwargs):
-        """Makes a submission file"""
-        raise NotImplementedError
-    
-    def inference(self, model, input, *args, **kwargs):
-        """run inference on some file, applies same transforms to it"""
-        raise NotImplementedError
-
-    def __call__(self, *args, **kwargs):
-        return self.get(*args, **kwargs)
+def inference(self, model, input, *args, **kwargs):
+    """run inference on some file, applies same transforms to it as `_make` / `get`."""
+    raise NotImplementedError

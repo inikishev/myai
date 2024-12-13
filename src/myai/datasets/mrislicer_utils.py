@@ -1,18 +1,18 @@
+"""my mri utils but not all of them inference ones in the contract lib plus some in mrid also i should add all new stuff to mrid"""
 import typing as T
-import random
 from collections import abc
 from functools import partial
 from operator import call
 
 import joblib
 import torch
-from mrid.training.mri_slicer import MRISlicer
 from mrid import totensor
+from mrid.training.mri_slicer import MRISlicer, randcrop2d
 
 from ..data import DS
-from ..python_tools import reduce_dim, maybe_compose
-from ..torch_tools import one_hot_mask, crop_around, overlay_segmentation
 from ..plt_tools import imshow
+from ..python_tools import reduce_dim
+from ..torch_tools import crop_around, one_hot_mask, overlay_segmentation
 
 
 def load_old_mrislicer_dataset(
@@ -66,24 +66,36 @@ def get_all_slices(dataset: list[MRISlicer] | str, around: int) -> list[abc.Call
     ds = reduce_dim([i.get_all_slice_callables() for i in dataset])
     return ds
 
-def randcrop(x: tuple[torch.Tensor, torch.Tensor], num_classes: int, size = (96,96),):
-    if x[0].shape[1] == size[0] and x[0].shape[2] == size[1]: return x
-    #print(x[0].shape)
-    startx = random.randint(0, (x[0].shape[1] - size[0]) - 1)
-    starty = random.randint(0, (x[0].shape[2] - size[1]) - 1)
-    return (
-        x[0][:, startx:startx+size[0], starty:starty+size[1]].to(torch.float32),
-        one_hot_mask(x[1][startx:startx+size[0], starty:starty+size[1]], num_classes)
-    )
+# mrid version better
+# def randcrop(x: tuple[torch.Tensor, torch.Tensor], num_classes: int, size = (96,96),):
+#     """randomly crop x which is tuple of `(image, mask)` where image is `(C, H, W)` and mask is `(H, W)`
+#     (mask will be one hot encoded)."""
+#     if x[0].shape[1] == size[0] and x[0].shape[2] == size[1]: return x
+#     if x[0].shape[1] < size[0] or x[0].shape[2] < size[1]: raise ValueError("Image is too small to crop to size")
+#     #print(x[0].shape)
+#     startx = random.randint(0, (x[0].shape[1] - size[0]) - 1)
+#     starty = random.randint(0, (x[0].shape[2] - size[1]) - 1)
+#     return (
+#         x[0][:, startx:startx+size[0], starty:starty+size[1]].to(torch.float32),
+#         one_hot_mask(x[1][startx:startx+size[0], starty:starty+size[1]], num_classes)
+#     )
 
+
+def _one_hot_x_mask(x: tuple[torch.Tensor, torch.Tensor], num_classes: int):
+    return x[0], one_hot_mask(x[1], num_classes)
+
+def _unsqueeze_x_mask(x: tuple[torch.Tensor, torch.Tensor]):
+    return x[0], x[1].unsqueeze(0)
 
 def make_ds(dataset: list[MRISlicer] | str, num_classes: int, around: int, any_prob: float = 0.5, window_size = (96,96)) -> DS:
     """Use for both train and test datasets. Since any_prob 0.5 works better anyway.
-    Each sample in returned ds is a tuple with (C, *window_size) image and (cls, *window_size) one-hot encoded mask."""
+    Each sample in returned ds is a tuple with `(C, *window_size)` image
+    and `(cls, *window_size)` one-hot encoded mask (or binary if num classes 1)."""
     ds = DS()
     slices = get_seg_slices(dataset, around = around, any_prob = any_prob)
-    transform = partial(randcrop, num_classes = num_classes, size = window_size)
-    ds.add_samples_(slices, loader = call, transform=transform)
+    if num_classes == 1: transforms = [partial(randcrop2d, size = window_size), _unsqueeze_x_mask]
+    else: transforms = [partial(randcrop2d, size = window_size), partial(_one_hot_x_mask, num_classes = num_classes)]
+    ds.add_samples_(slices, loader = call, transform=transforms)
     return ds
 
 
