@@ -7,11 +7,12 @@ from collections import UserList, abc
 
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
 
-from ..python_tools import Composable, compose, maybe_compose, SupportsIter, func2method
+from ..python_tools import (Composable, SupportsIter, compose, func2method,
+                            maybe_compose)
 from ..rng import RNG
 
-from torch.utils.data import DataLoader
 
 class Sample:
     def __init__(self, data, loader: Composable | None, transform: Composable | None):
