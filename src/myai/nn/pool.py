@@ -1,7 +1,8 @@
-from collections import abc as A
 import typing as T
+from collections import abc
+
 import torch
-from .conv import convnd
+
 
 class PoolLike(T.Protocol):
     """Protocol for pooling classes."""
@@ -12,7 +13,7 @@ class PoolLike(T.Protocol):
         padding: T.Any = 0,
         dilation: T.Any = 1,
         ndim: int = 2,
-    ) -> T.Callable[[torch.Tensor], torch.Tensor]: ...
+    ) -> abc.Callable[[torch.Tensor], torch.Tensor]: ...
 
 def _get_maxpoolnd_cls(ndim: int,):
     """Returns a class."""

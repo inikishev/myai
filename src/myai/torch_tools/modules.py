@@ -1,4 +1,4 @@
-import typing
+from collections import abc
 import torch
 
 def is_container(mod:torch.nn.Module):
@@ -24,7 +24,7 @@ def count_buffers(module:torch.nn.Module):
     return sum(b.numel() for b in module.buffers())
 
 
-def replace_layers_(model:torch.nn.Module, old:type, new:typing.Callable[..., torch.nn.Module]):
+def replace_layers_(model:torch.nn.Module, old:type, new:abc.Callable[..., torch.nn.Module]):
     """https://www.kaggle.com/code/ankursingh12/why-use-setattr-to-replace-pytorch-layers"""
     for n, module in model.named_children():
         if len(list(module.children())) > 0:
@@ -58,4 +58,3 @@ def replace_conv_transpose_(model:torch.nn.Module, old:type, new:type):
             ## simple module
             setattr(model, n, new(module.in_channels, module.out_channels, module.kernel_size,
                                   module.stride, module.padding, module.output_padding, module.groups, True, module.dilation))
-

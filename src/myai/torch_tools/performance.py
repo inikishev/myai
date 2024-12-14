@@ -2,18 +2,18 @@ import torch
 import torch.backends.opt_einsum
 
 def performance_tweaks(
-    cudnn_bench,
-    onednn_fusion=True,
-    detect_anomaly=False,
-    checknan=False,
-    autograd_profiler=False,
-    emit_nvtx=False,
-    deterministic=False,
-    float32_matmul_precision = 'high',
-    opt_einsum = True,
-    opt_einsum_strategy = 'auto-hq',
-    gradcheck=False,
-    gradgradcheck=False,
+    cudnn_bench: bool | None,
+    onednn_fusion: bool | None=True,
+    detect_anomaly: bool | None=False,
+    checknan: bool | None=False,
+    autograd_profiler: bool | None=False,
+    emit_nvtx: bool | None=False,
+    deterministic: bool | None=False,
+    float32_matmul_precision: str | None = 'high',
+    opt_einsum: bool | None = True,
+    opt_einsum_strategy: str | None = 'auto-hq',
+    gradcheck: bool | None=False,
+    gradgradcheck: bool | None=False,
 ):
     # causes cuDNN to benchmark multiple convolution algorithms and select the fastest
     if cudnn_bench is not None: torch.backends.cudnn.benchmark = cudnn_bench

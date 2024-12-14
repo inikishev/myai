@@ -161,7 +161,7 @@ class PerClassMetric(Callback, ABC):
 
             if self.class_labels is None: self.class_labels = list(range(len(values)))
 
-            for i, (label, value) in enumerate(zip(self.class_labels, values)):
+            for label, value in zip(self.class_labels, values):
                 learner.log(f'test {self.metric} - {label}', value)
 
             if self.bg_index is not None: values = np.delete(values, self.bg_index)

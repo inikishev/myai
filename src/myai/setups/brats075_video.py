@@ -1,12 +1,8 @@
 import torch
-from glio.jupyter_tools import show_slices_arr
-from monai.losses import DiceFocalLoss  # type:ignore
 
-from ..datasets.mrislicer_utils import ReferenceSlice, make_ds
+from ..datasets.mrislicer_utils import ReferenceSlice
 from ..learner import CB, Learner
-from ..loaders.nifti import niiread
-from ..python_tools import find_file_containing
-from ..torch_tools import crop_around, overlay_segmentation
+
 
 def get_learner(
     dltest,
@@ -73,7 +69,7 @@ def get_learner(
         scheduler=sched,
         main_metric = 'test dice mean',
     )
-    
+
     if postfix is not None:
         learner.set_postfix(postfix)
     return learner

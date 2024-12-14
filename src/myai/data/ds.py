@@ -124,12 +124,12 @@ class DS[R](abc.Sequence[R]):
     def shuffle_(self, seed = None):
         RNG(seed).random.shuffle(self.idxs)
 
-    def _ensure_absolute_amount(self, amount: T.Optional[int | float]):
+    def _ensure_absolute_amount(self, amount: int | float | None):
         if amount is None: return len(self)
         if isinstance(amount, float): return int(amount * len(self))
         return amount
 
-    def preload_(self, amount: T.Optional[int | float] = None, clear_data = False):
+    def preload_(self, amount: int | float | None = None, clear_data = False):
         """Preloads all or first `amount` samples."""
         amount = self._ensure_absolute_amount(amount)
 
@@ -163,7 +163,7 @@ class DS[R](abc.Sequence[R]):
 
     def calculate_mean_std(
         self,
-        dim: T.Optional[int | list[int] | tuple[int]] = 0,
+        dim: int | list[int] | tuple[int] | None = 0,
         batch_size = 32,
     ):
         if dim is None: dim = []

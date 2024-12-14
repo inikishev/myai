@@ -22,7 +22,7 @@ class FuncModule(nn.Module):
 
     def forward(self, x): return self.func(x)
 
-def func_to_named_module(func:Callable, name:T.Optional[str] = None) -> nn.Module:
+def func_to_named_module(func:Callable, name:str | None = None) -> nn.Module:
     """Wrap `func` into a torch.nn.Module, except the module will have the same name as the function (or `name` if it isn't `None`).
 
     Args:

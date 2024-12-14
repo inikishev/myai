@@ -22,7 +22,7 @@ class FastProgress(Callback):
         metrics: str | abc.Iterable[str] = ("train loss", "test loss"),
         bar_sec: float = 1,
         plot_sec: float = 10,
-        ybounds: T.Optional[tuple[float | None, float | None] | abc.Sequence[float | None]] = None,
+        ybounds: tuple[float | None, float | None] | abc.Sequence[float | None] | None = None,
         smooth: abc.Mapping[str, int] | None = None,
     ):
         self.metrics = metrics

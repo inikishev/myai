@@ -1,5 +1,6 @@
-import typing as T
+# pylint: disable=undefined-variable
 from collections.abc import Mapping, MutableMapping, Sequence
+
 
 def normalize_string(s:str):
     return ''.join([c.lower() for c in s if c.isalnum()])
@@ -72,7 +73,7 @@ class RelaxedMultikeyDict[VT](MutableMapping[str, VT]):
     def relaxed_to_orig(self, key:str):
         return self._relaxed_to_keys[normalize_string(key)]
 
-    def update(self, other: "Mapping[str | Sequence[str], VT] | RelaxedMultikeyDict[VT]") -> None: # type:ignore
+    def update(self, other: "Mapping[str | Sequence[str], VT] | RelaxedMultikeyDict[VT]") -> None:
         if isinstance(other, RelaxedMultikeyDict):
             self._prim_to_values.update(other._prim_to_values)
             self._relaxed_to_prim.update(other._relaxed_to_prim)

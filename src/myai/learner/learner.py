@@ -8,8 +8,7 @@ from collections import abc
 import numpy as np
 import torch
 
-from ..event_model import (Callback, CancelContext, ConditionalCallback,
-                           EventModel)
+from ..event_model import Callback, EventModel
 from ..loaders.text import txtread, txtwrite
 from ..loaders.yaml import yamlread, yamlwrite
 from ..logger.base_logger import BaseLogger
@@ -51,13 +50,13 @@ class Learner(EventModel):
     def __init__(
         self,
         callbacks: Callback | abc.Iterable[Callback] = (),
-        model: T.Optional[torch.nn.Module | SaveSignature | abc.Callable] = None,
-        loss_fn: T.Optional[abc.Callable | SaveSignature] = None,
-        optimizer: T.Optional[torch.optim.Optimizer | SaveSignature | T.Any] = None, # type:ignore
-        scheduler: T.Optional[torch.optim.lr_scheduler.LRScheduler | SaveSignature | T.Any] = None,
+        model: torch.nn.Module | SaveSignature | abc.Callable | None = None,
+        loss_fn: abc.Callable | SaveSignature | None = None,
+        optimizer: torch.optim.Optimizer | SaveSignature | T.Any | None = None, # type:ignore
+        scheduler: torch.optim.lr_scheduler.LRScheduler | SaveSignature | T.Any | None = None,
 
         device: T.Any = CUDA_IF_AVAILABLE,
-        logger: T.Optional[BaseLogger] = None,
+        logger: BaseLogger | None = None,
 
         name: str = '{prefix} {model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {cbtext} {postfix} - {datetime}',
         main_metric: str = 'test accuracy',
@@ -137,7 +136,7 @@ class Learner(EventModel):
             }
         return self
 
-    def _set_x(self, attr: str, x, params: T.Optional[abc.Mapping[str, T.Any]] = None):
+    def _set_x(self, attr: str, x, params: abc.Mapping[str, T.Any] | None = None):
         # SaveSignature contains x(*args, **kwargs) as well as signature of x
         # we set x and save signature by using _set_x_cls
         if isinstance(x, SaveSignature):

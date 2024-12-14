@@ -51,11 +51,11 @@ class Checkpoint(ConditionalCallback):
     def c_increased(self, event: str, metric: str):
         """Run this callback every `every` time event happens."""
         if event not in self.events: self.events[event] = []
-        self.events[event].append(_ConditionMetricIncrease(metric))
+        self.events[event].append(_ConditionMetricIncrease(metric)) # type:ignore
         return self
 
     def c_decreased(self, event: str, metric: str):
         """Run this callback every `every` time event happens."""
         if event not in self.events: self.events[event] = []
-        self.events[event].append(_ConditionMetricDecrease(metric))
+        self.events[event].append(_ConditionMetricDecrease(metric)) # type:ignore
         return self

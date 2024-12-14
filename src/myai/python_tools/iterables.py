@@ -3,8 +3,7 @@ import operator
 import typing as T
 from collections.abc import Iterable, Mapping, Sequence
 
-
-def _flatten_no_check(iterable: Iterable) -> list[T.Any]:
+def _flatten_no_check(iterable: Iterable | T.Any) -> list[T.Any]:
     """Flatten an iterable of iterables, returns a flattened list. Note that if `iterable` is not Iterable, this will return `[iterable]`."""
     if isinstance(iterable, Iterable):
         return [a for i in iterable for a in _flatten_no_check(i)]
@@ -13,7 +12,7 @@ def _flatten_no_check(iterable: Iterable) -> list[T.Any]:
 
 def flatten(iterable: Iterable) -> list[T.Any]:
     """Flatten an iterable of iterables, returns a flattened list. If `iterable` is not iterable, raises a TypeError."""
-    if isinstance(iterable, Iterable): return [a for i in iterable for a in _flatten_no_check(i)]
+    if isinstance(iterable, Iterable): return [a for i in iterable for a in _flatten_no_check(i)] # type:ignore=reportUnnecessaryIsInstance
     else: raise TypeError(f'passed object is not an iterable, {type(iterable) = }')
 
 def reduce_dim[X](x:Iterable[Iterable[X]]) -> list[X]: # pylint:disable=E0602

@@ -1,12 +1,10 @@
 import random
 from collections.abc import Sequence
-from typing import Any, Optional
 
-import numpy as np
 import torch
 from torchvision.transforms import v2
 
-from ._base import RandomTransform, Transform
+from ._base import RandomTransform
 
 __all__ = [
     "randflip",

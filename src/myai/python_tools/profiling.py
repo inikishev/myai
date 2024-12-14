@@ -3,7 +3,7 @@ import typing as T
 import time
 
 @contextlib.contextmanager
-def perf_counter_context(name: T.Optional[str | T.Any] = None, ndigits: T.Optional[int] = None):
+def perf_counter_context(name: str | T.Any | None = None, ndigits: int | None = None):
     time_start = time.perf_counter()
     yield
     time_took = time.perf_counter() - time_start
@@ -12,7 +12,7 @@ def perf_counter_context(name: T.Optional[str | T.Any] = None, ndigits: T.Option
     print(f"{name} took {time_took} perf_counter seconds")
 
 @contextlib.contextmanager
-def time_context(name: T.Optional[str | T.Any] = None, ndigits: T.Optional[int] = None):
+def time_context(name: str | T.Any | None = None, ndigits: int | None = None):
     time_start = time.time()
     yield
     time_took = time.time() - time_start

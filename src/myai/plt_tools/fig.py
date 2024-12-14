@@ -1,15 +1,14 @@
 import typing as T
 from collections.abc import Callable
+from itertools import zip_longest
 from operator import attrgetter, methodcaller
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
-from itertools import zip_longest
 
 from ..python_tools import Compose
-from ..python_tools.f2f import (func2func, func2method, method2func,
-                                method2method, method2method_return_override)
+from ..python_tools.f2f import method2func, method2method_return_override
 from ._plot import _Plot
 from ._types import _K_Text
 
@@ -25,7 +24,7 @@ class Fig:
     def __len__(self):
         return len(self.plots)
 
-    def add(self, title: T.Optional[str | T.Any] = None):
+    def add(self, title: str | T.Any | None = None):
         self.plots.append([])
         self.titles.append(str(title)[:10000] if title is not None else None)
         self.cur = len(self.plots) - 1
@@ -109,9 +108,9 @@ class Fig:
 
     def show(
         self,
-        nrows: T.Optional[int | float] = None,
-        ncols: T.Optional[int | float] = None,
-        figure: "T.Optional[Figure | _Plot | Fig]" = None,
+        nrows: int | float | None = None,
+        ncols: int | float | None = None,
+        figure: "Figure | _Plot | Fig | None" = None,
         figsize: float | tuple[float, float] | None = None,
         dpi: float | None = None,
         facecolor: T.Any | None = None,
@@ -126,8 +125,6 @@ class Fig:
                 nrows = len(self.plots) ** 0.45
             ncols = len(self.plots) / nrows # type:ignore
         else:
-            if ncols is None:
-                ncols = len(self.plots) ** 0.55
             nrows = len(self.plots) / ncols # type:ignore
 
         # ensure rows and cols are correct
@@ -203,4 +200,3 @@ def imshow_grid(images, labels = None, norm = 'norm', cmap = 'gray', **kwargs) -
         fig.add(label).imshow(image, norm = norm, cmap = cmap, **kwargs).set_axis_off()
 
     return fig
-

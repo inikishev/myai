@@ -7,8 +7,8 @@ from collections.abc import Callable, Sequence
 def get_all_files(
     dir: str,
     recursive: bool = True,
-    extensions: T.Optional[str | Sequence[str]] = None,
-    path_filter: T.Optional[Callable[[str], bool]] = None,
+    extensions: str | Sequence[str] | None = None,
+    path_filter: Callable[[str], bool] | None = None,
 ) -> list[str]:
     """ a list of full paths of all files in a given directory recursively.
 

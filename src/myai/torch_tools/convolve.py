@@ -1,5 +1,5 @@
-from collections.abc import Sequence, Callable
-from typing import Literal, Optional, Any
+from collections.abc import Sequence
+from typing import Literal
 import torch
 from .pad_ import pad
 from .crop_ import crop_to_shape
@@ -154,7 +154,7 @@ def _prepare_stride_or_padding(
 def conv_layer(
     input: torch.Tensor,
     kernel: torch.Tensor,
-    bias:Optional[torch.Tensor] = None,
+    bias: torch.Tensor | None = None,
     stride: int | Sequence[int] = 1,
     padding: int | Sequence[int] = 0,
     padding_mode = "constant",
@@ -214,7 +214,8 @@ class CustomConvnd(torch.nn.Module):
         padding_mode: str = 'zeros',
         device = None,
         dtype = None,
-        ndim=2,):
+        ndim=2,
+    ):
         """A module that copies torch.nn.Conv(n)d but uses `conv_layer` instead, for testing and as reference implementation.
 
         Args:

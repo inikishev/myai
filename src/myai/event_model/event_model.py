@@ -151,7 +151,7 @@ class EventModel:
         except CancelContext as e:
             if str(e) != name: raise e
             for event in after: self.fire_event(event)
-        except catch as e:
+        except catch:
             for event in after: self.fire_event(event)
         else:
             for event in after: self.fire_event(event)

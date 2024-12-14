@@ -29,7 +29,7 @@ COLORS = {
     "gray": (0.5, 0.5, 0.5),
 }
 
-def overlay_segmentation(x: torch.Tensor | np.ndarray, seg:torch.Tensor | np.ndarray, alpha: float = 0.5, colors = None, bg_index = 0):
+def overlay_segmentation(x: torch.Tensor | np.ndarray, seg:torch.Tensor | np.ndarray, alpha: float = 0.5, colors = None, bg_index: int | None = 0):
     """_summary_
 
     :param x: Tensor to put segmentation onto. Must be `(C, *)`. Will be converted to `(3, *)`.
@@ -53,7 +53,7 @@ def overlay_segmentation(x: torch.Tensor | np.ndarray, seg:torch.Tensor | np.nda
             if (0., 0., 0.) in colors: colors.remove((0., 0., 0.)) # remove black
             if (1., 1., 1.) in colors: colors.remove((1., 1., 1.)) # remove white
             n += 1
-    
+
     if isinstance(colors, str): colors = [colors]
     colors = [torch.tensor(COLORS[i.lower().strip()] if isinstance(i, str) else i, dtype=x.dtype, device=x.device) for i in colors]
     min = x.min(); max = x.max()

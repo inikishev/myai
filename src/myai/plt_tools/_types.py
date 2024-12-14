@@ -1,5 +1,5 @@
 import typing as T
-
+from collections import abc
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -21,9 +21,9 @@ _Rotations = T.Literal['vertical', 'horizontal']
 _VerticalAlignment = T.Literal['baseline', 'bottom', 'center', 'center_baseline', 'top']
 
 class _K_Figure(T.TypedDict, total=False):
-    figure: T.Optional[Figure]
-    ax: T.Optional[Axes]
-    figsize: float | T.Sequence[float] | None
+    figure: Figure | None
+    ax: Axes | None
+    figsize: float | abc.Sequence[float] | None
     dpi: float | None
     facecolor: T.Any | None
     edgecolor: T.Any | None
@@ -78,12 +78,12 @@ class _K_Collection(T.TypedDict, total=False):
     """https://matplotlib.org/stable/api/collections_api.html#matplotlib.collections.Collection"""
     edgecolors: T.Any
     facecolors: T.Any
-    linewidths: float | T.Sequence[float]
-    linestyles: _Linestyles | T.Sequence[_Linestyles]
+    linewidths: float | abc.Sequence[float]
+    linestyles: _Linestyles | abc.Sequence[_Linestyles]
     capstyle: _CapStyles
     joinstyle: _JoinStyles
-    antialiaseds: bool | T.Sequence[bool]
-    offsets: T.Sequence[float] | T.Sequence[T.Sequence[float]]
+    antialiaseds: bool | abc.Sequence[bool]
+    offsets: abc.Sequence[float] | abc.Sequence[abc.Sequence[float]]
     cmap: T.Any
     norm: T.Any
     hatch: _Hatch

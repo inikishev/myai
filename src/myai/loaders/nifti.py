@@ -1,6 +1,4 @@
 """nifti"""
-from typing import Optional
-import concurrent.futures
 import nibabel as nib
 import SimpleITK as sitk
 # import ants
@@ -16,14 +14,14 @@ def niiread_affine(path:str) -> np.ndarray:
 def niiwrite(path, arr:np.ndarray | torch.Tensor, affine:list|np.ndarray, dtype=None):
     if isinstance(arr, torch.Tensor): arr = arr.numpy()
     nib.save((nib.Nifti1Image(arr, affine, dtype=dtype)), path) # type:ignore
-    
-    
+
+
 def niireadtensor(path:str):
     arr = niiread(path)
     if arr.dtype == np.uint16: arr = arr.astype(np.int32)
     return torch.from_numpy(arr)
 
-def niiwrite_nib(path:str, arr:np.ndarray | torch.Tensor, affine:Optional[np.ndarray]):
+def niiwrite_nib(path:str, arr:np.ndarray | torch.Tensor, affine:np.ndarray | None):
     if isinstance(arr, torch.Tensor): arr = arr.numpy()
     nib.save((nib.Nifti1Image(arr, affine)), path) # type:ignore
 

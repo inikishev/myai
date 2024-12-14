@@ -10,7 +10,7 @@ def make_dict_serializeable(
     maxstr=1000,
     recursive=False,
     allowed_types=SERIALIZEABLE_TYPES,
-    type_handlers: T.Optional[dict[type, Callable[[T.Any], T.Any]]]=None,
+    type_handlers: dict[type, Callable[[T.Any], T.Any]] | None = None,
     default_handler:Callable[[T.Any], T.Any] = str,
     raw_strings = True,
 ) -> dict:

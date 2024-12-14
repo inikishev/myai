@@ -57,8 +57,8 @@ class _Plot:
 
     def grid(
         self,
-        major_alpha: T.Optional[float] = 0.3,
-        minor_alpha: T.Optional[float] = 0.1,
+        major_alpha: float | None = 0.3,
+        minor_alpha: float | None = 0.1,
         axis: T.Literal['both', 'x', 'y']="both",
         **kwargs: T.Unpack[_K_Line2D]
     ):
@@ -163,10 +163,10 @@ class _Plot:
     def imshow_grid(
         self,
         x,
-        nrows: T.Optional[int] = None,
-        ncols: T.Optional[int] = None,
+        nrows: int | None = None,
+        ncols: int | None = None,
         padding: int = 2,
-        value_range: T.Optional[tuple[int,int]] = None,
+        value_range: tuple[int,int] | None = None,
         normalize: bool = True,
         scale_each: bool = False,
         pad_value: float = 0,
@@ -198,8 +198,8 @@ class _Plot:
     def axtitle(
         self,
         label: T.Any,
-        loc: T.Optional[T.Literal["center", "left", "right"]] = None,
-        pad: T.Optional[float] = None,
+        loc: T.Literal["center", "left", "right"] | None = None,
+        pad: float | None = None,
         **kwargs: T.Unpack[_K_Text],
     ):
         self.ax.set_title(label = str(label)[:10000], loc = loc, pad = pad, **kwargs)
@@ -226,7 +226,7 @@ class _Plot:
         self.ylabel(ylabel, **kwargs)
         return self
 
-    def legend(self, size=6, edgecolor=None, linewidth=3., frame_alpha = 0.3, prop = None):
+    def legend(self, size: float | None=6, edgecolor=None, linewidth: float | None=3., frame_alpha = 0.3, prop = None):
         if prop is None: prop = {}
         if size is not None and 'size' not in prop: prop['size'] = size
 

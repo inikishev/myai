@@ -1,10 +1,8 @@
 import random
-from typing import Any, Optional
 
-import numpy as np
 import torch
 
-from ._base import RandomTransform, Transform
+from ._base import RandomTransform
 
 __all__ = [
     "add_gaussian_noise",

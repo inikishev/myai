@@ -1,4 +1,3 @@
-import functools
 import typing as T
 from collections.abc import Callable, Sequence
 

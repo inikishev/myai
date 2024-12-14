@@ -1,4 +1,3 @@
-import math
 import typing as T
 
 import numpy as np
@@ -97,11 +96,10 @@ def batched_raw_preds_to_one_hot(raw: torch.Tensor) -> torch.Tensor:
 
 
 @T.overload
-def stepchunk(vec: torch.Tensor, chunks: int, maxlength: T.Optional[int] = None) -> list[torch.Tensor]: ...
+def stepchunk(vec: torch.Tensor, chunks: int, maxlength: int | None = None) -> list[torch.Tensor]: ...
 @T.overload
-def stepchunk(vec: np.ndarray, chunks: int, maxlength: T.Optional[int] = None) -> list[np.ndarray]: ...
-def stepchunk(vec:torch.Tensor|np.ndarray, chunks:int, maxlength:T.Optional[int]=None) -> list[torch.Tensor] | list[np.ndarray]:
+def stepchunk(vec: np.ndarray, chunks: int, maxlength: int | None = None) -> list[np.ndarray]: ...
+def stepchunk(vec:torch.Tensor|np.ndarray, chunks:int, maxlength:int | None=None) -> list[torch.Tensor] | list[np.ndarray]:
     """Chunk a vector, but using steps (e.g. first chunk can be 0,4,8,12,16, second - 1,5,9,13,17, etc)"""
     maxlength = maxlength or vec.shape[0]
     return [vec[i : i+maxlength : chunks] for i in range(chunks)] # type:ignore
-

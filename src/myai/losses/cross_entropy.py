@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 
 
@@ -11,7 +9,7 @@ class CrossEntropyLoss(torch.nn.CrossEntropyLoss):
     If target is one hot encoded, it needs to have same dtype as input. Otherwise it needs to be int64."""
     def __init__(
         self,
-        weight: Optional[torch.Tensor] = None,
+        weight: torch.Tensor | None = None,
         size_average=None,
         ignore_index: int = -100,
         reduce=None,
@@ -38,7 +36,7 @@ class BCELoss(torch.nn.BCELoss):
     with Automatic Casting."""
     def __init__(
         self,
-        weight: Optional[torch.Tensor] = None,
+        weight: torch.Tensor | None = None,
         size_average=None,
         reduce=None,
         reduction: str = "mean",
@@ -58,11 +56,11 @@ class BCEWithLogitsLoss(torch.nn.BCEWithLogitsLoss):
     with Automatic Casting."""
     def __init__(
         self,
-        weight: Optional[torch.Tensor] = None,
+        weight: torch.Tensor | None = None,
         size_average=None,
         reduce=None,
         reduction: str = "mean",
-        pos_weight: Optional[torch.Tensor] = None,):
+        pos_weight: torch.Tensor | None = None,):
         super().__init__(
             weight=weight,
             size_average=size_average,

@@ -9,7 +9,7 @@ from collections.abc import Iterator, Mapping, MutableMapping
 
 import numpy as np
 import torch
-from glio.python_tools import int_at_beginning
+from glio.python_tools import int_at_beginning_raise
 
 from ..plt_tools._types import _K_Collection, _K_Line2D
 from ..plt_tools.fig import Fig
@@ -37,7 +37,7 @@ class Comparison:
             # checkpoints are inside epoch folders
             else:
                 dirs = [i for i in os.listdir(run) if i[0].isnumeric()]
-                dirs.sort(key = int_at_beginning)
+                dirs.sort(key = int_at_beginning_raise)
                 for d in dirs[::-1]:
                     if 'checkpoint' in os.listdir(os.path.join(run, d)):
                         checkpoint = os.path.join(run, d, 'checkpoint')
@@ -62,14 +62,14 @@ class Comparison:
         else: caller = operator.methodcaller('max', metric)
 
         max_values = sorted([(k, caller(v)) for k,v in self.loggers.items()], key = lambda x:x[1], reverse=True)
-        return Comparison({k:self.loggers[k] for k,v in max_values[:n]})
+        return Comparison({k:self.loggers[k] for k,_ in max_values[:n]})
 
     def n_lowest(self, metric, n: int, last = False):
         if last: caller = operator.methodcaller('last', metric)
         else: caller = operator.methodcaller('min', metric)
 
         min_values = sorted([(k, caller(v)) for k,v in self.loggers.items()], key = lambda x:x[1])
-        return Comparison({k:self.loggers[k] for k,v in min_values[:n]})
+        return Comparison({k:self.loggers[k] for k,_ in min_values[:n]})
 
     def n_best(self, metric, n: int, highest = True, last = False):
         if highest: return self.n_highest(metric, n, last)

@@ -1,9 +1,11 @@
-from typing import Optional
 import random
+
 import numpy as np
 import torch
+
+
 class RNG:
-    def __init__(self, seed: Optional[int]):
+    def __init__(self, seed: int | None):
         self.seed = seed
         self.random = random.Random(seed)
         self.numpy = np.random.default_rng(seed)

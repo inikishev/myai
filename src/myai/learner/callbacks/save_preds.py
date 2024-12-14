@@ -22,7 +22,7 @@ class Save2DImagePreds(ConditionalCallback):
         targets = None,
         labels = None,
         n = None,
-        activation: T.Optional[abc.Callable] = None,
+        activation: abc.Callable | None = None,
         show_targets = True,
         show_grads = True,
         show_inputs = True,
@@ -55,7 +55,7 @@ class Save2DImagePreds(ConditionalCallback):
 
         preds = learner.inference(self.inputs, enable_grad=self.show_grads).requires_grad_(True)
         if self.activation is not None:
-                preds = self.activation(preds)
+            preds = self.activation(preds)
 
         # evaluate loss and the gradients
         if self.show_grads:
@@ -94,7 +94,7 @@ class Save2DSegmentationPreds(ConditionalCallback):
         labels = None,
         dir="preds",
         root="runs",
-        activation: T.Optional[abc.Callable] = None,
+        activation: abc.Callable | None = None,
         nrows=None,
         ncols=None,
         figsize=24,
