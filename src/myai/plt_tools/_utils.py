@@ -5,7 +5,9 @@ import numpy as np
 
 def _prepare_image_for_plotting(x: np.ndarray, allow_4_channels: bool = False, warn = True) -> np.ndarray:
     # plt requirement: arrays must be of dtype byte, short, float32 or float64
-    if x.dtype not in (np.float32, np.float64): x = x.astype(np.float32)
+    if x.dtype not in (np.float32, np.float64):
+        if x.dtype == np.uint8: x = x.astype(np.float32) / 255
+        else: x = x.astype(np.float32)
 
     x = x.squeeze()
     if x.ndim == 2: return x

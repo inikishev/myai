@@ -11,7 +11,7 @@ import numpy as np
 import torch
 from glio.python_tools import int_at_beginning_raise
 
-from ..plt_tools._types import _K_Collection, _K_Line2D
+from ..plt_tools._types import _K_Line2D
 from ..plt_tools.fig import Fig
 from .base_logger import BaseLogger
 from .dict_logger import DictLogger
@@ -73,7 +73,7 @@ class Comparison:
 
     def n_best(self, metric, n: int, highest = True, last = False):
         if highest: return self.n_highest(metric, n, last)
-        else: return self.n_lowest(metric, n, last)
+        return self.n_lowest(metric, n, last)
 
     def plot(self, metric: str, n: int | None = 13, highest = True, last = False, **kwargs: T.Unpack[_K_Line2D]):
         if n is None: comp = self

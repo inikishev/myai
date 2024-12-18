@@ -4,17 +4,18 @@ import time
 import typing as T
 import warnings
 from collections import abc
+from datetime import datetime
 
 import numpy as np
 import torch
 
 from ..event_model import Callback, EventModel
-from ..loaders.text import txtread, txtwrite
+from ..loaders.text import txtwrite
 from ..loaders.yaml import yamlread, yamlwrite
 from ..logger.base_logger import BaseLogger
 from ..logger.dict_logger import DictLogger
 from ..python_tools import (SaveSignature, epoch_to_datetime, get__name__,
-                            get_full_kwargs, make_dict_serializeable,
+                            get_extra_signature, make_dict_serializeable,
                             to_valid_fname)
 from ..torch_tools import CUDA_IF_AVAILABLE, maybe_ensure_pynumber
 from .callbacks.default import Default
@@ -58,14 +59,14 @@ class Learner(EventModel):
         device: T.Any = CUDA_IF_AVAILABLE,
         logger: BaseLogger | None = None,
 
-        name: str = '{prefix} {model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {cbtext} {postfix} - {datetime}',
+        name: str = '{prefix} {model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {cbtext} {postfix} - {date_created}',
         main_metric: str = 'test accuracy',
 
         default_callbacks: Callback | abc.Iterable[Callback] = Default(),
     ):
         super().__init__()
-        self.info: dict[str, T.Any] = {"info": {}}
-        """Info dictionary, which is `{'model': {'name': 'ResNet', params: {}}, ..., 'info': {}}`"""
+        self.info: dict[str, dict | T.Any] = {}
+        """Info dictionary, which is `{'model': {'__class__': 'ResNet', init_filters: 32, ...}}`"""
         self.prefix = ''
         """Prefix for the name"""
         self.postfix = ''
@@ -75,7 +76,7 @@ class Learner(EventModel):
         if logger is None: logger = DictLogger()
         self.logger: BaseLogger = logger
         self.name_template = name
-        """By default this is `'{prefix} {model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {cbtext} {postfix} - {datetime}'`."""
+        """By default this is `'{prefix} {model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {cbtext} {postfix} - {date_created}'`."""
         self.main_metric = main_metric
         """Main metric to be used for epoch dir name, by default `test accuracy`."""
         self.backward_kwargs = {}
@@ -122,6 +123,7 @@ class Learner(EventModel):
 
 
     def _set_x_cls[**P](self, attr: str, x: abc.Callable[P, T.Any], *args: P.args, **kwargs: P.kwargs):
+        """sets `self.attr = x(*args, **kwargs)` and saves args and kwargs into `self.info`."""
         arglist = list(args)
         for i,v in enumerate(arglist):
             if isinstance(v, SaveSignature): arglist[i] = v.resolve()
@@ -130,27 +132,26 @@ class Learner(EventModel):
             if isinstance(v, SaveSignature): kwargs[k] = v.resolve()
 
         setattr(self, attr, x(*arglist, **kwargs)) # type:ignore
-        self.info[attr] = {
-            "name": get__name__(x),
-            'params': make_dict_serializeable(get_full_kwargs(x, *args, **kwargs), raw_strings=False)
-            }
+        self.info[attr] = make_dict_serializeable(
+            get_extra_signature(x, *args, **kwargs), raw_strings=False, recursive=True
+        )
+        self.info[attr]['__class__'] = get__name__(getattr(self, attr))
+
         return self
 
     def _set_x(self, attr: str, x, params: abc.Mapping[str, T.Any] | None = None):
+        """sets `self.attr = x`, and saves params into `self.info`"""
         # SaveSignature contains x(*args, **kwargs) as well as signature of x
         # we set x and save signature by using _set_x_cls
         if isinstance(x, SaveSignature):
             setattr(self, attr, x.resolve())
-            self.info[attr] = {
-                "name": get__name__(x.obj),
-                'params': make_dict_serializeable(x.signature, raw_strings=False)
-            }
+            self.info[attr] = make_dict_serializeable(x.extra_signature(), raw_strings=False, recursive=True)
             return self
 
         # else just set the attribute
         setattr(self, attr, x)
-        self.info[attr] = {"name": get__name__(x)}
-        if params is not None: self.info[attr]['params'] = make_dict_serializeable(params, raw_strings=False)
+        self.info[attr] = {"__class__": get__name__(x)}
+        if params is not None: self.info[attr].update(make_dict_serializeable(params, raw_strings=False, recursive=True))
         return self
 
     def set_model_cls[**P](self, cls: abc.Callable[P, torch.nn.Module | abc.Callable], *args: P.args, **kwargs: P.kwargs):
@@ -169,18 +170,20 @@ class Learner(EventModel):
         return self._set_x_cls('scheduler', cls, *args, **kwargs)
     def set_scheduler(self, scheduler: torch.optim.lr_scheduler.LRScheduler | T.Any): return self._set_x('scheduler', scheduler)
 
-    def add_named_info(self, name: str, **params: T.Any):
+    def add_named_info(self, name: str, **info: T.Any):
         """Add named misc. info, for example transforms."""
-        self.info['info'][name] = make_dict_serializeable(params, raw_strings=False)
-
-    def add_info(self, **kwargs):
-        """Add misc. info"""
-        self.info['info'].update(make_dict_serializeable(kwargs, raw_strings=False))
+        if name not in self.info: self.info[name] = {}
+        self.info[name].update(make_dict_serializeable(info, raw_strings=False, recursive=True))
         return self
+
+    def add_info(self, **info):
+        """Add misc. info"""
+        return self.add_named_info('info', **info)
 
     def set_name(self, name: str = '{model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {postfix}'):
         """Sets name which is mainly used as directory name for saving stuff. Can use `{}`"""
         self.name_template = name
+        return self
 
     def set_postfix(self, postfix: str):
         """Set postfix which may be used in the name. Can use `{}`."""
@@ -195,8 +198,11 @@ class Learner(EventModel):
     def get_main_metric(self):
         if self.main_metric in self.logger:
             return self.logger.last(self.main_metric)
-        else:
-            return ""
+        return ""
+
+    def set_main_metric(self, metric:str):
+        self.main_metric = metric
+        return self
 
     def _process_interp_template(self, s: str) -> str:
         """Preprocesses a template inside {} brackets."""
@@ -207,45 +213,41 @@ class Learner(EventModel):
 
         # get from self.info
         if base in self.info:
-            if 'name' in self.info[base]:
-                if attr is None: return str(self.info[base]['name'])
-                else:
-                    if 'params' in self.info[base] and attr in self.info[base]['params']: return str(self.info[base]['params'][attr])
-                    elif attr in self.info[base]: return str(self.info[base][attr])
-                    else: return ''
-
-            elif attr is None: return str(self.info[base])
-            else:
-                if attr in self.info[base]: return str(self.info[base][attr])
-                else: return ''
+            if attr is None:
+                if '__class__' in self.info[base]: return str(self.info[base]['__class__'])
+                if '__constructor__' in self.info[base]: return str(self.info[base]['__constructor__'])
+                return ''
+            if attr in self.info[base]: return str(self.info[base][attr])
+            if attr in self.info['info']: return str(self.info['info'][attr])
+            return ''
 
         # get from logger
-        elif base == 'logger':
+        if base == 'logger':
             if attr is None: raise ValueError(f'Invalid template: {s}, {attr} not found in logger')
-            elif attr in self.logger: 
+            if attr in self.logger:
                 v = maybe_ensure_pynumber(self.logger.last(attr))
                 if isinstance(v, float): v = f'{v:.4f}'
                 return str(v)
-            else: return ''
+            return ''
 
         # get some other attribute
-        else:
-            if base == 'datetime': return epoch_to_datetime(self.creation_time).strftime("%Y.%m.%d %H-%M-%S")
-            elif base == 'main_metric':
-                v = maybe_ensure_pynumber(self.get_main_metric())
-                if isinstance(v, float): v = f'{v:.4f}'
-                return str(v)
-            elif base == 'prefix':
-                return self.process_template(self.prefix)
-            elif base == 'postfix':
-                return self.process_template(self.postfix)
-            elif base == 'cbtext':
-                return ' '.join(cb._learner_text for cb in self.callbacks)
-            elif base in dir(self):
-                v = getattr(self, base)
-                if v is not None: return str(v)
-                return ''
-            else: raise ValueError(f'Invalid template: {s}, {base} not found')
+        if base == 'date_created': return epoch_to_datetime(self.creation_time).strftime("%Y.%m.%d %H-%M-%S")
+        if base == 'datetime': return datetime.now().strftime("%Y.%m.%d %H-%M-%S")
+        if base == 'main_metric':
+            v = maybe_ensure_pynumber(self.get_main_metric())
+            if isinstance(v, float): v = f'{v:.4f}'
+            return str(v)
+        if base == 'prefix':
+            return self.process_template(self.prefix)
+        if base == 'postfix':
+            return self.process_template(self.postfix)
+        if base == 'cbtext':
+            return ' '.join(cb._learner_text for cb in self.callbacks)
+        if base in dir(self):
+            v = getattr(self, base)
+            if v is not None: return str(v)
+            return ''
+        raise ValueError(f'Invalid template: {s}, {base} not found')
 
     def process_template(self, template: str) -> str:
         """Processes a template like `'{total_epochs} {logger.test loss} {main_metric}'`"""
@@ -327,7 +329,7 @@ class Learner(EventModel):
 
     @property
     def name(self):
-        """By default this is `{model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {postfix} {datetime}`"""
+        """By default this is `{model} {loss_fn} {optimizer}{optimizer.lr} {scheduler} {postfix} {date_created}`"""
         n = self.process_template(self.name_template)
         if len(n) == 0 or n == ' ': n = 'empty-name'
         return n
@@ -336,6 +338,7 @@ class Learner(EventModel):
         """Whether to pass closure to optimizer. When Learner is created, this is set to True by default."""
         cb: Default = self.get_callback('Default') # type:ignore
         cb._use_closure = use_closure
+        return self
 
     def state_dict(self):
         """State dict. Saves the following attributes: ones that have `state_dict`,
@@ -404,9 +407,9 @@ class Learner(EventModel):
             learner_attrs = {} # learner state_dict for stuff like cur_batch
             for k, v in self.state_dict().items():
                 if k == 'logger': continue # logger is saved using `save`
-                elif 'state_dict' in v: torch.save(v['state_dict'], os.path.join(dir, f'{k}.state_dict'))
+                if 'state_dict' in v: torch.save(v['state_dict'], os.path.join(dir, f'{k}.state_dict'))
                 else: learner_attrs[k] = v
-            torch.save(learner_attrs, os.path.join(dir, 'learner.attrs'))
+            torch.save(learner_attrs, os.path.join(dir, 'learner_attrs.state_dict'))
 
         # save logger
         if logger:
@@ -424,8 +427,8 @@ class Learner(EventModel):
         if 'logger.npz' in files: self.logger.load(os.path.join(dir, 'logger.npz'))
 
         # load attrs like cur_batch
-        if 'learner.attrs' in files:
-            learner_attrs: dict[str, T.Any] = torch.load(os.path.join(dir, 'learner.attrs'), weights_only = False)
+        if 'learner_attrs.state_dict' in files:
+            learner_attrs: dict[str, T.Any] = torch.load(os.path.join(dir, 'learner_attrs.state_dict'), weights_only = False)
             for k, v in learner_attrs.items():
                 if 'object' in v:
                     setattr(self, k, v['object'])

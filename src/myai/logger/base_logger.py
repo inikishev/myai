@@ -7,7 +7,7 @@ import numpy as np
 import torch
 
 from ..plt_tools._types import _K_Collection, _K_Line2D
-from ..plt_tools.fig import Fig, imshow, linechart, scatter
+from ..plt_tools.fig import Fig
 
 
 
@@ -55,13 +55,21 @@ class BaseLogger(MutableMapping[str, T.Any], ABC):
         return self.get_metric_as_list(key)[-1]
 
     def min(self, key:str):
-        return self.get_metric_as_numpy(key).min()
+        return np.nanmin(self.get_metric_as_numpy(key))
 
     def max(self, key:str):
-        return self.get_metric_as_numpy(key).max()
+        return np.nanmax(self.get_metric_as_numpy(key))
 
     def mean(self, key: str):
-        return self.get_metric_as_numpy(key).mean()
+        return np.nanmean(self.get_metric_as_numpy(key))
+
+    def argmin(self, key:str):
+        idx = np.nanargmin(self.get_metric_as_numpy(key)).item()
+        return self.get_metric_steps(key)[idx]
+
+    def argmax(self, key:str):
+        idx = np.nanargmax(self.get_metric_as_numpy(key)).item()
+        return self.get_metric_steps(key)[idx]
 
     def get_metric_as_list(self, key: str) -> list[T.Any]:
         """Returns items under `key` as list. Step is ignored."""
@@ -147,9 +155,10 @@ class BaseLogger(MutableMapping[str, T.Any], ABC):
         logger.load(filepath)
         return logger
 
-    def plot(self, *metrics: str, **kwargs: T.Unpack[_K_Line2D]):
+    def plot(self, *metrics: str, fig = None, **kwargs: T.Unpack[_K_Line2D]):
         k: dict[str, T.Any] = kwargs.copy() # type:ignore # this is necesary for pylance to shut up
-        fig = Fig().add()
+        if fig is None: fig = Fig()
+        fig.add()
         ylabel = metrics[0] if len(metrics) == 1 else "value"
         for metric in metrics:
             x = list(self[metric].keys())
@@ -158,10 +167,11 @@ class BaseLogger(MutableMapping[str, T.Any], ABC):
         if len(metrics) > 1: fig.legend()
         return fig.ticks().grid()
 
-    def linechart(self, x:str, y:str, **kwargs: T.Unpack[_K_Line2D]):
+    def linechart(self, x:str, y:str, fig = None, **kwargs: T.Unpack[_K_Line2D]):
         xvals = self.get_metric_interpolate(x)
         yvals = self.get_metric_interpolate(y)
-        return linechart(xvals, yvals, **kwargs).axlabels(x, y).ticks().grid()
+        if fig is None: fig = Fig()
+        return fig.add().linechart(xvals, yvals, **kwargs).axlabels(x, y).ticks().grid()
 
     def as_yaml_string(self):
         text = ""

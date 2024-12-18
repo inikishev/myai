@@ -187,7 +187,7 @@ class _Plot:
         # ensure rows are correct
         if nrows is None: raise ValueError('shut up pylance')
         nrows = round(nrows)
-        if nrows < 1: nrows = 1
+        nrows = max(nrows, 1)
 
         # make the grid
         grid = make_grid(x, nrow=nrows, padding = padding, normalize=normalize, value_range=value_range, scale_each=scale_each, pad_value=pad_value)
@@ -300,10 +300,10 @@ class _Plot:
         self.ax.set_axis_off()
         return self
 
-    def xscale(self, scale: str | T.Any):
-        self.ax.set_xscale(scale)
+    def xscale(self, scale: str | T.Any, **kwargs):
+        self.ax.set_xscale(scale, **kwargs)
         return self
 
-    def yscale(self, scale: str | T.Any):
-        self.ax.set_yscale(scale)
+    def yscale(self, scale: str | T.Any, **kwargs):
+        self.ax.set_yscale(scale, **kwargs)
         return self

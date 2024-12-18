@@ -5,7 +5,7 @@ from collections.abc import Callable, Iterable
 
 from .iterables import flatten
 from .identity import identity
-
+from .objects import get__name__
 type Composable[**P, R] = Callable[P, R] | Iterable[Callable[P, R]]
 
 class Compose:
@@ -46,17 +46,26 @@ def maybe_compose(*functions: Callable | None | Iterable[Callable | None]) -> Ca
     if len(flattened) == 0: return identity
     return Compose(*flattened)
 
-def get_full_kwargs[**P2](fn: Callable[P2, T.Any], *args: P2.args, **kwargs: P2.kwargs) -> dict[str, T.Any]:
+def get_full_signature[**P2](fn: Callable[P2, T.Any], *args: P2.args, **kwargs: P2.kwargs) -> dict[str, T.Any]:
     """Returns a dictionary of all keyword arguments of a function called with given args and kwargs."""
     sig = inspect.signature(fn).bind(*args, **kwargs)
     sig.apply_defaults()
     return sig.arguments
 
+
+def get_extra_signature[**P2](fn: Callable[P2, T.Any], *args: P2.args, **kwargs: P2.kwargs) -> dict[str, T.Any]:
+    """Returns a dictionary of all keyword arguments of a function called with given args and kwargs."""
+    sig = inspect.signature(fn).bind(*args, **kwargs)
+    sig.apply_defaults()
+    extra_args = sig.arguments.copy()
+    extra_args['__constructor__'] = get__name__(fn)
+    return extra_args
+
 class _NotConstructed: pass
 class SaveSignature[V]:
     def __init__[**K](self, obj: Callable[K, V], *args: K.args, **kwargs: K.kwargs): # pylint:disable=undefined-variable
         self.obj: Callable[..., V] = obj # pylint:disable=undefined-variable
-        self.signature = get_full_kwargs(obj, *args, **kwargs)
+        self.signature = get_full_signature(obj, *args, **kwargs)
         for k,v in self.signature.items():
             if isinstance(v, SaveSignature):
                 self.signature[k] = v.resolve()
@@ -66,6 +75,14 @@ class SaveSignature[V]:
         if self.is_constructed: return self.constructed_obj # type:ignore
         self.constructed_obj = self.obj(**self.signature)
         return self.constructed_obj
+
+    def extra_signature(self):
+        """signature plus class name and constructor name, this resolves!"""
+        constructed_obj = self.resolve()
+        sig = self.signature.copy()
+        sig.update({"__class__": get__name__(constructed_obj)})
+        sig.update({"__constructor__": get__name__(self.obj)})
+        return sig
 
     @property
     def is_constructed(self):

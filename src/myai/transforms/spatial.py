@@ -68,13 +68,12 @@ def fast_slice_reduce_size(x:torch.Tensor, min_shape: Sequence[int]):
     min_times = int(min(times))
     if min_times <= 2:
         return x
-    else:
-        reduction = random.randrange(2, min_times)
-        ndim = x.ndim
-        if ndim == 2: return x[:, ::reduction]
-        elif ndim == 3: return x[:, ::reduction, ::reduction]
-        elif ndim == 4: return x[:, ::reduction, ::reduction, ::reduction]
-        else: raise ValueError(f'{x.shape = }')
+    reduction = random.randrange(2, min_times)
+    ndim = x.ndim
+    if ndim == 2: return x[:, ::reduction]
+    if ndim == 3: return x[:, ::reduction, ::reduction]
+    if ndim == 4: return x[:, ::reduction, ::reduction, ::reduction]
+    raise ValueError(f'{x.shape = }')
 
 def fast_slice_reduce_sizet(seq:Sequence[torch.Tensor], min_shape: Sequence[int]):
     x = seq[0]
@@ -82,13 +81,12 @@ def fast_slice_reduce_sizet(seq:Sequence[torch.Tensor], min_shape: Sequence[int]
     min_times = int(min(times))
     if min_times <= 2:
         return seq
-    else:
-        reduction = random.randrange(2, min_times)
-        ndim = x.ndim
-        if ndim == 2: return [i[:, ::reduction] for i in seq]
-        elif ndim == 3: return [i[:, ::reduction, ::reduction] for i in seq]
-        elif ndim == 4: return [i[:, ::reduction, ::reduction, ::reduction] for i in seq]
-        else: raise ValueError(f'{x.shape = }')
+    reduction = random.randrange(2, min_times)
+    ndim = x.ndim
+    if ndim == 2: return [i[:, ::reduction] for i in seq]
+    if ndim == 3: return [i[:, ::reduction, ::reduction] for i in seq]
+    if ndim == 4: return [i[:, ::reduction, ::reduction, ::reduction] for i in seq]
+    raise ValueError(f'{x.shape = }')
 
 class FastSliceReduceSize(RandomTransform):
     def __init__(self, min_shape: Sequence[int], p:float=0.5, seed = None):
@@ -111,7 +109,7 @@ def resize_to_fit(
     interpolation: v2.InterpolationMode = v2.InterpolationMode.BILINEAR,
     antialias=True,
 ):
-    """Image must be (C, H, W). Resizes so that larger side is `size`."""
+    """Resize to fit into a (size x size) square. Image must be (C, H, W). Resizes so that larger side is `size`."""
     largest = max(image.shape[1:])
     factor = size / largest
     return v2.functional.resize(
@@ -127,7 +125,7 @@ def resize_to_contain(
     interpolation: v2.InterpolationMode = v2.InterpolationMode.BILINEAR,
     antialias=True,
 ):
-    """Image must be (C, H, W). Resizes so that smaller side is `size`."""
+    """Resize to contain a (size x size) square. Image must be (C, H, W). Resizes so that smaller side is `size`."""
     smallest = min(image.shape[1:])
     factor = size / smallest
 

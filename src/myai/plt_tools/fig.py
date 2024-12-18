@@ -131,8 +131,8 @@ class Fig:
         if nrows is None or ncols is None: raise ValueError('shut up pylance')
         nrows = round(nrows)
         ncols = round(ncols)
-        if nrows < 1: nrows = 1
-        if ncols < 1: ncols = 1
+        nrows = max(nrows, 1)
+        ncols = max(ncols, 1)
         r = True
         while nrows * ncols < len(self.plots):
             if r: ncols += 1
@@ -191,11 +191,11 @@ def scatter(*args, **kwargs) -> Fig: return Fig().add().scatter(*args, **kwargs)
 @method2func(Fig.imshow)
 def imshow(*args, **kwargs) -> Fig: return Fig().add().imshow(*args, **kwargs)
 
-def imshow_grid(images, labels = None, norm = 'norm', cmap = 'gray', **kwargs) -> Fig:
+def imshow_grid(images, labels = None, norm = 'norm', cmap = 'gray', fig = None, **kwargs) -> Fig:
     if labels is None:
         labels = [None] * len(images)
 
-    fig = Fig()
+    if fig is None: fig = Fig()
     for image, label in zip(images, labels):
         fig.add(label).imshow(image, norm = norm, cmap = cmap, **kwargs).set_axis_off()
 

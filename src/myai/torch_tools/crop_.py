@@ -1,8 +1,11 @@
 from collections.abc import Sequence
-from typing import Literal
-import torch
-
-def crop(input:torch.Tensor, reduction:Sequence[int], where: Literal["center", "start", "end"] = "center",):
+from typing import Literal,overload
+import torch, numpy as np
+@overload
+def crop(input:torch.Tensor, reduction:Sequence[int], where: Literal["center", "start", "end"] = "center",) -> torch.Tensor: ...
+@overload
+def crop(input:np.ndarray, reduction:Sequence[int], where: Literal["center", "start", "end"] = "center",) -> np.ndarray: ...
+def crop(input:torch.Tensor|np.ndarray, reduction:Sequence[int], where: Literal["center", "start", "end"] = "center",):
     """Crop `input` using `crop`:
 
     `output.shape[i]` = `input.shape[i] - crop[i]`.
@@ -19,7 +22,11 @@ def crop(input:torch.Tensor, reduction:Sequence[int], where: Literal["center", "
 
     return input[(..., *slices)]
 
-def crop_to_shape(input:torch.Tensor, shape:Sequence[int], where: Literal["center", "start", "end"] = "center",):
+@overload
+def crop_to_shape(input:torch.Tensor, shape:Sequence[int], where: Literal["center", "start", "end"] = "center",) -> torch.Tensor: ...
+@overload
+def crop_to_shape(input:np.ndarray, shape:Sequence[int], where: Literal["center", "start", "end"] = "center",) -> np.ndarray: ...
+def crop_to_shape(input:torch.Tensor | np.ndarray, shape:Sequence[int], where: Literal["center", "start", "end"] = "center",):
     """Crop `input` to `shape`."""
     return crop(input, [i - j for i, j in zip(input.shape, shape)], where=where)
 

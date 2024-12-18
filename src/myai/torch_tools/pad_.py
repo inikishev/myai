@@ -1,45 +1,57 @@
 from collections.abc import Sequence
-from typing import Literal
+from typing import Literal, overload
 
 import torch
-
+import numpy as np
 from ..python_tools import reduce_dim
 from .crop_ import crop as _crop
 
-
+@overload
+def _pad(input: torch.Tensor,padding: Sequence[int],mode: str = "constant",value=None,where: Literal["center", "start", "end"] = "center") -> torch.Tensor: ...
+@overload
+def _pad(input: np.ndarray,padding: Sequence[int],mode: str = "constant",value=None,where: Literal["center", "start", "end"] = "center") -> np.ndarray: ...
+@torch.no_grad
 def _pad(
-    input: torch.Tensor,
+    input: torch.Tensor | np.ndarray,
     padding: Sequence[int],
     mode: str = "constant",
     value=None,
     where: Literal["center", "start", "end"] = "center",
-) -> torch.Tensor:
+) -> np.ndarray | torch.Tensor:
     # create padding sequence for torch.nn.functional.pad
     if where == 'center':
-        torch_padding = [(int(i / 2), int(i / 2)) if i % 2 == 0 else (int(i / 2), int(i / 2) + 1) for i in padding]
+        dims_padding = [(int(i / 2), int(i / 2)) if i % 2 == 0 else (int(i / 2), int(i / 2) + 1) for i in padding]
     elif where == 'start':
-        torch_padding = [(i, 0) for i in padding]
+        dims_padding = [(i, 0) for i in padding]
     elif where == 'end':
-        torch_padding = [(0, i) for i in padding]
+        dims_padding = [(0, i) for i in padding]
     else: raise ValueError(f'Invalid where: {where}')
 
     # broadcasting (e.g. if padding 3×128×128 by [4, 4], it will pad by [0, 4, 4])
-    if len(torch_padding) < input.ndim:
-        torch_padding = [(0, 0)] * (input.ndim - len(torch_padding)) + torch_padding
+    if len(dims_padding) < input.ndim:
+        dims_padding = [(0, 0)] * (input.ndim - len(dims_padding)) + dims_padding
 
     if mode == 'zeros': mode = 'constant'; value = 0
     elif mode == 'min': mode = 'constant'; value = float(input.min())
+    elif mode == 'max': mode = 'constant'; value = float(input.max())
+    elif mode == 'mean': mode = 'constant'; value = float(input.mean())
 
-    return torch.nn.functional.pad(input, reduce_dim(reversed(torch_padding)), mode=mode, value=value)
+    if isinstance(input, np.ndarray):
+        return np.pad(input, pad_width = dims_padding, mode = mode, constant_values = value) # type:ignore
+    return torch.nn.functional.pad(input, reduce_dim(reversed(dims_padding)), mode=mode, value=value)
 
+@overload
+def pad(input: torch.Tensor,padding: Sequence[int],mode: str = "constant",value=None,where: Literal["center", "start", "end"] = "center",crop = True) -> torch.Tensor: ...
+@overload
+def pad(input: np.ndarray,padding: Sequence[int],mode: str = "constant",value=None,where: Literal["center", "start", "end"] = "center",crop = True) -> np.ndarray: ...
 def pad(
-    input: torch.Tensor,
+    input: torch.Tensor | np.ndarray,
     padding: Sequence[int],
     mode: str = "constant",
     value=None,
     where: Literal["center", "start", "end"] = "center",
     crop = True,
-) -> torch.Tensor:
+) -> np.ndarray | torch.Tensor:
     """
     Padding function that is easier to read:
 
@@ -68,14 +80,18 @@ def pad(
             input =  _crop(input, crop_values, where=where)
     return input
 
+@overload
+def pad_to_shape(input: torch.Tensor,shape: Sequence[int],mode: str = "constant",value=None,where: Literal["center", "start", "end"] = "center",crop = False,) -> torch.Tensor: ...
+@overload
+def pad_to_shape(input: np.ndarray,shape: Sequence[int],mode: str = "constant",value=None,where: Literal["center", "start", "end"] = "center",crop = False,) -> np.ndarray: ...
 def pad_to_shape(
-    input:torch.Tensor,
+    input:torch.Tensor | np.ndarray,
     shape:Sequence[int],
     mode:str = "constant",
     value=None,
     where:Literal["center", "start", "end"] = "center",
     crop = False,
-) -> torch.Tensor:
+) -> np.ndarray | torch.Tensor:
     # broadcasting
     if len(shape) < input.ndim:
         shape = list(input.shape[:input.ndim - len(shape)]) + list(shape)

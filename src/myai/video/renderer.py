@@ -51,7 +51,7 @@ class OpenCVRenderer:
         :raises ValueError: If frame shape is different from the previous one.
         """
         # make sure it is hw3
-        frame = tonumpy(force_hw3(frame))
+        frame = tonumpy(force_hw3(frame))[:,:,::-1]
 
         # on first frame create writer and use frame shape as video size
         if self.writer is None:

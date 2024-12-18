@@ -21,6 +21,7 @@ from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torchvision.transforms import v2
 from tqdm import tqdm
+import torchzero as tz
 
 from . import nn as mynn
 from . import python_tools
@@ -41,7 +42,7 @@ from .python_tools import (ShutUp, clean_mem, compose, find_file_containing,
 from .python_tools import printargs as printa
 from .python_tools import reduce_dim, time_context
 from .python_tools.functions import SaveSignature as sig
-from .torch_tools import count_params
+from .torch_tools import count_params, pad, pad_to_shape, pad_like, pad_dim
 from .transforms import normalize, znormalize
 
 CUDA = torch.device('cuda')

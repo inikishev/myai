@@ -9,18 +9,24 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from ..python_tools import (Composable, SupportsIter, compose, func2method,
+from ..python_tools import (Composable, SupportsIter, SupportsLenAndGetitem, compose, func2method,
                             maybe_compose)
 from ..rng import RNG
 
 
 class Sample:
-    def __init__(self, data, loader: Composable | None, transform: Composable | None):
-        self.data = data
+    def __init__(self, data, loader: Composable | None, transform: Composable | None, call=False):
+        self._data = data
         self.loader: abc.Callable = maybe_compose(loader)
         self.transform = maybe_compose(transform)
+        self.call = call
 
         self.preloaded = None
+
+    @property
+    def data(self):
+        if self.call: return self._data()
+        return self._data
 
     def __call__(self):
         if self.preloaded is not None: return self.transform(self.preloaded)
@@ -86,7 +92,10 @@ class DS[R](abc.Sequence[R]):
         self._add_sample_object(Sample(data, loader, transform))
 
     def add_samples_(self, samples: SupportsIter, loader: Composable | None = None, transform: Composable | None = None):
-        self._add_sample_objects([Sample(s, loader, transform) for s in samples]) #type:ignore
+        self._add_sample_objects([Sample(s, loader, transform) for s in samples])
+
+    def add_dataset_(self, dataset: SupportsLenAndGetitem, loader: Composable | None = None, transform: Composable | None = None):
+        self._add_sample_objects([Sample(operator.getitem(dataset, i), loader, transform, call=True) for i in range(len(dataset))]) # type:ignore
 
     def merge_(self, ds: "DS"):
         self._add_sample_objects(ds.samples)
@@ -140,7 +149,7 @@ class DS[R](abc.Sequence[R]):
             for s in self.samples[:amount]: s.preload_()
 
         if clear_data:
-            for s in self.samples[:amount]: s.data = None
+            for s in self.samples[:amount]: s._data = None
 
     def split(self, splits: int | float | abc.Sequence[int | float], shuffle = True, seed = None) -> "list[DS[R]]":
         if isinstance(splits, (int, float)): splits = [splits, ]
@@ -197,5 +206,3 @@ class DS[R](abc.Sequence[R]):
 
         if mean is None or std is None: raise ValueError('Dataset is empty.')
         return mean / nsamples, std / nsamples
-
-
