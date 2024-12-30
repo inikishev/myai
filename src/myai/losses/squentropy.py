@@ -6,6 +6,23 @@ import torch
 from ..torch_tools import batched_one_hot_mask
 
 class Squentropy(torch.nn.Module):
+    """Hui, L., Belkin, M., & Wright, S. (2023, July). Cut your losses with squentropy.
+    In International Conference on Machine Learning (pp. 14114-14131). PMLR.
+
+    Cross-entropy loss plus average square loss over the incorrect classes.
+
+
+    Args:
+        true_scale (float, optional): rescales loss at true label. Defaults to 1.
+        onehot_scale (float, optional): rescales the one-hot encoding. Defaults to 1.
+        ignore_bg (bool, optional): whether to ignore channel under index 0, which is commonly background in segmentation tasks. Defaults to False.
+        weight (_type_, optional): weights of ecah class. Defaults to None.
+        ord (int, optional): order of the loss (1 for L1 loss, 2 for MSE, etc). Defaults to 2.
+
+    Signature:
+        input: `(B, C, *)`. Unnormalized logits without softmax or sigmoid.
+        target: `(B, C, *)` or `(B, *)`
+    """
     def __init__(
         self,
         true_scale: float = 1,
@@ -14,16 +31,6 @@ class Squentropy(torch.nn.Module):
         weight = None,
         ord = 2,
     ):
-        """Hui, L., Belkin, M., & Wright, S. (2023, July). Cut your losses with squentropy. In International Conference on Machine Learning (pp. 14114-14131). PMLR.
-
-        Cross-entropy loss plus average square loss over the incorrect classes.
-
-        :param true_scale: Rescales loss at true label, defaults to 1
-        :param onehot_scale: rescales the one-hot encoding, defaults to 1
-        :param ce_act: activation to use for cross entropy.
-        :param ignore_bg: Whether to ignore background, defaults to False
-        :param weight: Weights of ecah class, defaults to None
-        """
         super().__init__()
         self.ignore_bg = ignore_bg
         if weight is not None and not isinstance(weight, torch.Tensor): weight = torch.as_tensor(weight, dtype=torch.float32)

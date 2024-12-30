@@ -37,7 +37,9 @@ def _pad(
     elif mode == 'mean': mode = 'constant'; value = float(input.mean())
 
     if isinstance(input, np.ndarray):
-        return np.pad(input, pad_width = dims_padding, mode = mode, constant_values = value) # type:ignore
+        if mode == 'constant': kwargs = {"constant_values": value}
+        else: kwargs = {}
+        return np.pad(input, pad_width = dims_padding, mode = mode, **kwargs) # type:ignore
     return torch.nn.functional.pad(input, reduce_dim(reversed(dims_padding)), mode=mode, value=value)
 
 @overload

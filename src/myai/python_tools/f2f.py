@@ -47,3 +47,12 @@ def method2func[**P, R](wrapper: abc.Callable[typing.Concatenate[typing.Any, P],
         return func # type:ignore
 
     return decorator
+
+def method2func_return_override[**P, R, RNew](wrapper: abc.Callable[typing.Concatenate[typing.Any, P], R], ret: type[RNew]):
+    """Copies the signature from a method to a function. Works with VSCode autocomplete."""
+
+    def decorator(func: abc.Callable[typing.Concatenate[typing.Any, P], R]) -> abc.Callable[P, RNew]:
+        func.__doc__ = wrapper.__doc__
+        return func # type:ignore
+
+    return decorator

@@ -50,10 +50,10 @@ class _K_Line2D(T.TypedDict, total=False):
     ds: _DrawStyles
     fillstyle: _FillStyles
     gapcolor: T.Any | None
-    label: str
+    label: str | None
     linestyle: _Linestyles
     ls: _Linestyles
-    linewidth: float
+    linewidth: float | None
     lw: float
     marker: str
     markeredgecolor: T.Any
@@ -78,7 +78,7 @@ class _K_Collection(T.TypedDict, total=False):
     """https://matplotlib.org/stable/api/collections_api.html#matplotlib.collections.Collection"""
     edgecolors: T.Any
     facecolors: T.Any
-    linewidths: float | abc.Sequence[float]
+    linewidths: float | abc.Sequence[float] | None
     linestyles: _Linestyles | abc.Sequence[_Linestyles]
     capstyle: _CapStyles
     joinstyle: _JoinStyles

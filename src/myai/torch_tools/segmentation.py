@@ -27,6 +27,7 @@ COLORS = {
     "purple": (0.5, 0, 0.5),
     "p": (0.5, 0, 0.5),
     "gray": (0.5, 0.5, 0.5),
+    "lightblue": (0.2, 0.6, 1),
 }
 
 def overlay_segmentation(x: torch.Tensor | np.ndarray, seg:torch.Tensor | np.ndarray, alpha: float = 0.5, colors = None, bg_index: int | None = 0):

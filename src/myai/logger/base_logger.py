@@ -158,7 +158,7 @@ class BaseLogger(MutableMapping[str, T.Any], ABC):
     def plot(self, *metrics: str, fig = None, **kwargs: T.Unpack[_K_Line2D]):
         k: dict[str, T.Any] = kwargs.copy() # type:ignore # this is necesary for pylance to shut up
         if fig is None: fig = Fig()
-        fig.add()
+        #fig.add()
         ylabel = metrics[0] if len(metrics) == 1 else "value"
         for metric in metrics:
             x = list(self[metric].keys())
@@ -171,7 +171,7 @@ class BaseLogger(MutableMapping[str, T.Any], ABC):
         xvals = self.get_metric_interpolate(x)
         yvals = self.get_metric_interpolate(y)
         if fig is None: fig = Fig()
-        return fig.add().linechart(xvals, yvals, **kwargs).axlabels(x, y).ticks().grid()
+        return fig.linechart(xvals, yvals, **kwargs).axlabels(x, y).ticks().grid()
 
     def as_yaml_string(self):
         text = ""

@@ -26,3 +26,5 @@ class RNG:
         if key not in self._torch_generators:
             self._torch_generators[key] = torch.Generator(device).manual_seed(self.seed) if self.seed else None
         return self._torch_generators[key]
+
+Seed = int | RNG | None

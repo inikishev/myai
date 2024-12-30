@@ -73,7 +73,6 @@ class InMemoryDataloader:
             memory_efficient (bool, optional):
                 if True, doesn't use any additional memory but is slightly slower.
                 If False, uses two times the memory that `data` takes, but is faster.
-            .
         """
 
         self.data = data

@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING
 
 import torch
 from torchzero.core import OptimizerModule
-from torchzero.modules import LaplacianSmoothing as TorchzeroLaplacianSmoothing
+from torchzero.modules import LaplacianSmoothing as TorchzeroLaplacianSmoothing, SetGrad
 from torchzero.modules import (gradient_laplacian_smoothing_, normalize_grad_,
                                sign_grad_)
-from torchzero.optim import ModularOptimizer
+from torchzero.optim import Modular
 
 from ...event_model import Callback
 
@@ -74,26 +74,28 @@ class LaplacianSmoothing(Callback):
     def after_backward(self, learner: "Learner"):
         if self.smoother is None:
             # we create a smoother because it will cache the denominator which will be faster
-            self.smoother = ModularOptimizer(
+            self.smoother = Modular(
                 learner.model.parameters(),
-                TorchzeroLaplacianSmoothing(sigma = self.sigma, layerwise=self.layerwise)
+                TorchzeroLaplacianSmoothing(sigma = self.sigma, layerwise=self.layerwise),
+                SetGrad(),
             )
 
         self.smoother.step()
 
 class TorchzeroModule(Callback):
-    def __init__(self, modules: OptimizerModule | Iterable[OptimizerModule]):
+    def __init__(self, modules: OptimizerModule | Iterable[OptimizerModule], set_grad=True):
         super().__init__()
         if isinstance(modules, OptimizerModule): modules = [modules]
         self.modules = list(modules)
+        if set_grad: self.modules.append(SetGrad())
         self.opt = None
 
     def before_fit(self, learner: "Learner"):
-        self.opt = ModularOptimizer(learner.model.parameters(), self.modules)
+        self.opt = Modular(learner.model.parameters(), self.modules)
 
     def after_backward(self, learner: "Learner"):
         if self.opt is None:
-            self.opt = ModularOptimizer(learner.model.parameters(), self.modules)
+            self.opt = Modular(learner.model.parameters(), self.modules)
 
         closure = learner.make_closure(learner.batch)
         self.opt.step(closure)

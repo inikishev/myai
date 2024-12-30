@@ -1,11 +1,8 @@
-import functools
 import typing as T
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 
 import torch
 
-from .func import ensure_module
-from .modulelist import ModuleList
 
 
 class LinearLike(T.Protocol):

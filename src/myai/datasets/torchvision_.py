@@ -23,8 +23,8 @@ class _TorchvisionClassificationDataset:
     def _make(self):
         """downloads stacks calculates mean std and znormalizes and returns images and labels"""
         # download
-        train = self.cls(root = self.root, transform=v2.Compose([v2.ToTensor(), v2.ToDtype(torch.float32)]), download=True)
-        test = self.cls(root = self.root, transform=v2.Compose([v2.ToTensor(), v2.ToDtype(torch.float32)]), download=True, train=False)
+        train = self.cls(root = self.root, transform=v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32)]), download=True)
+        test = self.cls(root = self.root, transform=v2.Compose([v2.ToImage(), v2.ToDtype(torch.float32)]), download=True, train=False)
 
         # stack
         images = torch.stack([i[0] for i in train] + [i[0] for i in test])
@@ -37,7 +37,7 @@ class _TorchvisionClassificationDataset:
         return images, labels
 
     def _save(self):
-        """save dataset arrays to disk for fast loading."""
+        """save znormalized dataset arrays to disk for fast loading."""
         images, labels = self._make()
         np.savez_compressed(os.path.join(self.root, f'{self.name}.npz'), images=images, labels = labels)
 
@@ -57,3 +57,6 @@ MNIST = _TorchvisionClassificationDataset('MNIST', torchvision.datasets.MNIST)
 First 60,000 samples are commonly used as train set."""
 CIFAR10 = _TorchvisionClassificationDataset('CIFAR10', torchvision.datasets.CIFAR10)
 """60,000 (3, 32, 32) znormalized per channel, labels 0 to 9, first 50,000 for train set"""
+FashionMNIST = _TorchvisionClassificationDataset('FashionMNIST', torchvision.datasets.FashionMNIST)
+"""70,000 images (1, 28, 28), entire dataset is znormalized. Each image has integer label 0 to 9.
+last 10,000 images are test set."""

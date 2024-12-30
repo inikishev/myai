@@ -1,7 +1,8 @@
-
+from functools import partial
 import inspect
 import typing as T
 from collections.abc import Callable, Iterable
+from collections import OrderedDict
 
 from .iterables import flatten
 from .identity import identity
@@ -46,14 +47,14 @@ def maybe_compose(*functions: Callable | None | Iterable[Callable | None]) -> Ca
     if len(flattened) == 0: return identity
     return Compose(*flattened)
 
-def get_full_signature[**P2](fn: Callable[P2, T.Any], *args: P2.args, **kwargs: P2.kwargs) -> dict[str, T.Any]:
+def get_full_signature[**P2](fn: Callable[P2, T.Any], *args: P2.args, **kwargs: P2.kwargs) -> OrderedDict[str, T.Any]:
     """Returns a dictionary of all keyword arguments of a function called with given args and kwargs."""
     sig = inspect.signature(fn).bind(*args, **kwargs)
     sig.apply_defaults()
     return sig.arguments
 
 
-def get_extra_signature[**P2](fn: Callable[P2, T.Any], *args: P2.args, **kwargs: P2.kwargs) -> dict[str, T.Any]:
+def get_extra_signature[**P2](fn: Callable[P2, T.Any], *args: P2.args, **kwargs: P2.kwargs) -> OrderedDict[str, T.Any]:
     """Returns a dictionary of all keyword arguments of a function called with given args and kwargs."""
     sig = inspect.signature(fn).bind(*args, **kwargs)
     sig.apply_defaults()
@@ -73,7 +74,27 @@ class SaveSignature[V]:
 
     def resolve(self) -> V: # pylint:disable=undefined-variable
         if self.is_constructed: return self.constructed_obj # type:ignore
-        self.constructed_obj = self.obj(**self.signature)
+
+        # make sure *arg only arguments are passed as args
+        full_argspec = inspect.getfullargspec(self.obj)
+        args = []
+        kwargs = self.signature.copy()
+
+        if (full_argspec.varargs is not None) or (full_argspec.varkw is not None):
+
+            # all kwargs from signature that are before varargs must be passed as args
+            for k, v in kwargs.copy().items():
+                if k == full_argspec.varargs:
+                    args.extend(v)
+                    del kwargs[k]
+                elif k == full_argspec.varkw:
+                    del kwargs[k]
+                    kwargs.update(v)
+                elif (full_argspec.varargs is not None) and (len(args) == 0):
+                    args.append(v)
+                    del kwargs[k]
+
+        self.constructed_obj = self.obj(*args, **kwargs)
         return self.constructed_obj
 
     def extra_signature(self):

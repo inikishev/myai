@@ -22,7 +22,7 @@ def get_all_files(
     """
     all_files = []
     if isinstance(extensions, str): extensions = [extensions]
-    if extensions is not None: extensions = tuple([i.lower() for i in extensions])
+    if extensions is not None: extensions = tuple(i.lower() for i in extensions)
     if recursive:
         for root, _, files in (os.walk(dir)):
             for file in files:
@@ -75,7 +75,7 @@ __valid_fname_chars = frozenset(" -_.,()")
 
 def is_valid_fname(string:str) -> bool:
     if len(string) == 0: return False
-    return all([c in __valid_fname_chars or c.isalnum() for c in string])
+    return all(c in __valid_fname_chars or c.isalnum() for c in string)
 
 def to_valid_fname(string:str, fallback = '-', empty_fallback = 'empty', maxlen = 127, valid_chars = __valid_fname_chars) -> str:
     """Makes sure filename doesn't have forbidden characters and isn't empty or too long,

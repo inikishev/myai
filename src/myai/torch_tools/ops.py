@@ -3,7 +3,7 @@ import typing as T
 import numpy as np
 import torch
 
-
+from .pad_ import pad
 def center_of_mass(feature:torch.Tensor):
     '''
     adapted to pytorch from
@@ -67,13 +67,14 @@ def center_of_mass(feature:torch.Tensor):
 
     return center_mass[0].squeeze(1)
 
-def binary_erode3d(tensor: torch.Tensor, n: int = 1):
+def binary_erode3d(tensor: torch.Tensor, n: int = 1, padding_mode = 'replicate'):
     """
     Erodes a 3D binary tensor.
     """
     if n > 1: tensor = binary_erode3d(tensor, n-1)
-    kernel = torch.tensor([[[[[0,0,0],[0,1,0],[0,0,0]],[[0,1,0],[1,1,1],[0,1,0]],[[0,0,0],[0,1,0],[0,0,0]]]]], dtype=torch.int64)
-    convolved = torch.nn.functional.conv3d(input = tensor.unsqueeze(0), weight = kernel, padding=1) # pylint:disable=E1102
+    kernel = torch.tensor([[[[[0,0,0],[0,1,0],[0,0,0]],[[0,1,0],[1,1,1],[0,1,0]],[[0,0,0],[0,1,0],[0,0,0]]]]], dtype=tensor.dtype, device=tensor.device)
+    padded_input = torch.nn.functional.pad(tensor.unsqueeze(0), (1,1,1,1,1,1), mode = 'replicate')
+    convolved = torch.nn.functional.conv3d(input = padded_input, weight = kernel, padding=0) # pylint:disable=E1102
     return torch.where(convolved==7, 1, 0)[0]
 
 def one_hot_mask(mask: torch.Tensor, num_classes:int) -> torch.Tensor:

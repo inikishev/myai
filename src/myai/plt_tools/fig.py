@@ -2,13 +2,13 @@ import typing as T
 from collections.abc import Callable
 from itertools import zip_longest
 from operator import attrgetter, methodcaller
-
+from types import NoneType
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
 
 from ..python_tools import Compose
-from ..python_tools.f2f import method2func, method2method_return_override
+from ..python_tools.f2f import method2func, method2method_return_override, method2func_return_override
 from ._plot import _Plot
 from ._types import _K_Text
 
@@ -97,6 +97,9 @@ class Fig:
     @method2method_return_override(_Plot.set_axis_off, _Fig)
     def set_axis_off(self, *args, **kwargs): return self._add_plot_func("set_axis_off", *args, **kwargs)
 
+    @method2method_return_override(_Plot.axoff, _Fig)
+    def axoff(self, *args, **kwargs): return self._add_plot_func("axoff", *args, **kwargs)
+
     @method2method_return_override(_Plot.xscale, _Fig)
     def xscale(self, *args, **kwargs): return self._add_plot_func("xscale", *args, **kwargs)
 
@@ -105,6 +108,51 @@ class Fig:
 
     @method2method_return_override(_Plot.segmentation, _Fig)
     def segmentation(self, *args, **kwargs): return self._add_plot_func("segmentation", *args, **kwargs)
+
+    @method2method_return_override(_Plot.preset, _Fig)
+    def preset(self, *args, **kwargs): return self._add_plot_func("preset", *args, **kwargs)
+
+    @method2method_return_override(_Plot.funcplot1d, _Fig)
+    def funcplot1d(self, *args, **kwargs): return self._add_plot_func("funcplot1d", *args, **kwargs)
+
+    @method2method_return_override(_Plot.contourf, _Fig)
+    def contour(self, *args, **kwargs): return self._add_plot_func("contour", *args, **kwargs)
+
+    @method2method_return_override(_Plot.contourf, _Fig)
+    def contourf(self, *args, **kwargs): return self._add_plot_func("contourf", *args, **kwargs)
+
+    @method2method_return_override(_Plot.pcolormesh, _Fig)
+    def pcolormesh(self, *args, **kwargs): return self._add_plot_func("pcolormesh", *args, **kwargs)
+
+    @method2method_return_override(_Plot.colorbar, _Fig)
+    def colorbar(self, *args, **kwargs): return self._add_plot_func("colorbar", *args, **kwargs)
+
+    @method2method_return_override(_Plot.funcplot2d, _Fig)
+    def funcplot2d(self, *args, **kwargs): return self._add_plot_func("funcplot2d", *args, **kwargs)
+
+    @method2method_return_override(_Plot.path, _Fig)
+    def path(self, *args, **kwargs): return self._add_plot_func("path", *args, **kwargs)
+
+    @method2method_return_override(_Plot.vline, _Fig)
+    def vline(self, *args, **kwargs): return self._add_plot_func("vline", *args, **kwargs)
+
+    @method2method_return_override(_Plot.hline, _Fig)
+    def hline(self, *args, **kwargs): return self._add_plot_func("hline", *args, **kwargs)
+
+    @method2method_return_override(_Plot.line, _Fig)
+    def line(self, *args, **kwargs): return self._add_plot_func("line", *args, **kwargs)
+
+    @method2method_return_override(_Plot.origin_lines, _Fig)
+    def origin_lines(self, *args, **kwargs): return self._add_plot_func("origin_lines", *args, **kwargs)
+
+    @method2method_return_override(_Plot.point, _Fig)
+    def point(self, *args, **kwargs): return self._add_plot_func("point", *args, **kwargs)
+
+    @method2method_return_override(_Plot.quiver, _Fig)
+    def quiver(self, *args, **kwargs): return self._add_plot_func("quiver", *args, **kwargs)
+
+    @method2method_return_override(_Plot.funcplot2d_quiver, _Fig)
+    def funcplot2d_quiver(self, *args, **kwargs): return self._add_plot_func("funcplot2d_quiver", *args, **kwargs)
 
     def show(
         self,
@@ -138,6 +186,9 @@ class Fig:
             if r: ncols += 1
             else: ncols += 1
             r = not r
+
+        nrows = min(nrows, len(self.plots))
+        ncols = min(ncols, len(self.plots))
 
         # create the figure if it is None
         if isinstance(figsize, (int,float)): figsize = (figsize, figsize)
@@ -176,8 +227,25 @@ class Fig:
     def clear(self):
         self.plots = []
 
-    def savefig(self, path):
+    def savefig(
+        self,
+        path,
+        nrows: int | float | None = None,
+        ncols: int | float | None = None,
+        figure: "Figure | _Plot | Fig | None" = None,
+        figsize: float | tuple[float, float] | None = None,
+        dpi: float | None = None,
+        facecolor: T.Any | None = None,
+        edgecolor: T.Any | None = None,
+        frameon: bool = True,
+        layout: T.Literal["constrained", "compressed", "tight", "none"] | None = 'compressed',
+        **label_kwargs: T.Unpack[_K_Text],
+        ):
+        loc = locals().copy()
+        del loc['path'], loc['self']
+        self.show(**loc)
         self.figure.savefig(path, bbox_inches='tight', pad_inches=0)
+        self.close()
 
     def close(self):
         plt.close(self.figure)
@@ -190,6 +258,15 @@ def scatter(*args, **kwargs) -> Fig: return Fig().add().scatter(*args, **kwargs)
 
 @method2func(Fig.imshow)
 def imshow(*args, **kwargs) -> Fig: return Fig().add().imshow(*args, **kwargs)
+
+@method2func(Fig.funcplot1d)
+def funcplot1d(*args, **kwargs) -> Fig: return Fig().add().funcplot1d(*args, **kwargs)
+
+@method2func(Fig.funcplot2d)
+def funcplot2d(*args, **kwargs) -> Fig: return Fig().add().funcplot2d(*args, **kwargs)
+
+@method2func(Fig.pcolormesh)
+def pcolormesh(*args, **kwargs) -> Fig: return Fig().add().pcolormesh(*args, **kwargs)
 
 def imshow_grid(images, labels = None, norm = 'norm', cmap = 'gray', fig = None, **kwargs) -> Fig:
     if labels is None:

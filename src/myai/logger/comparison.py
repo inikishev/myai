@@ -75,27 +75,34 @@ class Comparison:
         if highest: return self.n_highest(metric, n, last)
         return self.n_lowest(metric, n, last)
 
-    def plot(self, metric: str, n: int | None = 13, highest = True, last = False, **kwargs: T.Unpack[_K_Line2D]):
+    def plot(self, metric: str, n: int | None = 13, highest = True, last = False, x = None, fig = None, **kwargs: T.Unpack[_K_Line2D]):
         if n is None: comp = self
         else: comp = self.n_best(metric, n, highest, last)
 
         k: dict[str, T.Any] = kwargs.copy() # type:ignore # this is necesary for pylance to shut up
-        fig = Fig().add()
+        if fig is None: fig = Fig()
+        xlabel, ylabel = None, None
         for name, logger in comp.loggers.items():
             if metric not in logger:
                 logging.warning('%s is not in %s', metric, name)
             else:
-                x = list(logger[metric].keys())
-                y = list(logger[metric].values())
-                fig.linechart(x, y, label = name, **k)
-        return fig.axlabels('step', metric).legend().ticks().grid()
+                if x is None:
+                    xvals = list(logger[metric].keys())
+                    yvals = list(logger[metric].values())
+                    xlabel, ylabel = 'step', metric
+                else:
+                    xlabel, ylabel = x, metric
+                    xvals, yvals = logger.get_shared_metrics(x, metric)
 
-    def linechart(self, x: str, y: str, n: int | None = None, highest = True, last = False, **kwargs: T.Unpack[_K_Line2D]):
+                fig.linechart(xvals, yvals, label = name, **k)
+        return fig.axlabels(xlabel, ylabel).legend().ticks().grid()
+
+    def linechart(self, x: str, y: str, n: int | None = None, highest = True, last = False, fig = None, **kwargs: T.Unpack[_K_Line2D]):
         if n is None: comp = self
         else: comp = self.n_best(y, n, highest, last)
 
         k: dict[str, T.Any] = kwargs.copy() # type:ignore # this is necesary for pylance to shut up
-        fig = Fig().add()
+        if fig is None: fig = Fig()
         for name, logger in comp.loggers.items():
             if x not in logger or y not in logger:
                 logging.warning('%s or %s is not in %s', x, y, name)

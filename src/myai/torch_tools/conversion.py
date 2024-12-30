@@ -48,7 +48,7 @@ def maybe_ensure_pynumber[X](x: int | float | torch.Tensor | np.ndarray | X) -> 
     if isinstance(x, np.ndarray):
         if x.size == 1: return x.item()
         return x
-    elif isinstance(x, torch.Tensor):
+    if isinstance(x, torch.Tensor):
         x = x.detach().cpu()
         if x.numel() == 1: return x.item()
         return x.numpy()
@@ -69,11 +69,11 @@ def maybe_detach_cpu_recursive(x):
     """Recursively detaches and moves x or all elements in x to CPU. Can be slow!"""
     if isinstance(x, torch.Tensor):
         return x.detach().cpu()
-    elif isinstance(x, abc.Mapping):
+    if isinstance(x, abc.Mapping):
         return {k: maybe_detach_cpu_recursive(v) for k, v in x.items()}
-    elif isinstance(x, abc.MutableSequence):
+    if isinstance(x, abc.MutableSequence):
         return [maybe_detach_cpu_recursive(v) for v in x]
-    elif isinstance(x, abc.Sequence):
+    if isinstance(x, abc.Sequence):
         return tuple(maybe_detach_cpu_recursive(v) for v in x)
     return x
 
@@ -81,14 +81,20 @@ def ensure_numpy_recursive(x) -> np.ndarray:
     """Converts x to numpy array if it is not already one. If tensor, ensures it is detached and on CPU, RECURSIVELY. Can be slow!"""
     if isinstance(x, torch.Tensor):
         return x.detach().cpu().numpy()
-    elif isinstance(x, np.ndarray):
+    if isinstance(x, np.ndarray):
         return x
-    elif isinstance(x, abc.Sequence):
+    if isinstance(x, abc.Sequence):
         return np.asarray([ensure_numpy_recursive(i) for i in x])
-    else:
-        return x
+    return np.asarray(x)
 
 def ensure_numpy_or_none_recursive(x) -> np.ndarray | None:
     """Converts x to numpy array if it is not already one. If tensor, ensures it is detached and on CPU, RECURSIVELY. Can be slow! If None, returns None."""
     if x is None: return None
-    return ensure_numpy_or_none_recursive(x)
+    return ensure_numpy_recursive(x)
+
+def maybe_to(tensor: torch.Tensor, dtype = None, device = None):
+    kwargs = {}
+    if dtype is not None: kwargs["dtype"] = dtype
+    if device is not None: kwargs["device"] = device
+    if len(kwargs) > 0: return tensor.to(**kwargs)
+    return tensor

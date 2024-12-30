@@ -4,11 +4,12 @@ import torch
 def tonumpy(x) -> np.ndarray:
     if isinstance(x, torch.Tensor):
         return x.detach().cpu().numpy()
+    if isinstance(x, np.ndarray): return x
     return np.array(x, copy=False)
 
 def totensor(x, dtype = None, device = None):
     if isinstance(x, np.ndarray):
         return torch.from_numpy(x).to(device=device, dtype=dtype, copy=False)
-    elif isinstance(x, torch.Tensor):
+    if isinstance(x, torch.Tensor):
         return x.to(device=device, dtype=dtype, copy=False)
-    return torch.tensor(x, device=device, dtype=dtype,)
+    return torch.from_numpy(np.array(x)).to(device=device, dtype=dtype,)

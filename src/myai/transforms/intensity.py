@@ -85,7 +85,7 @@ def meanstd_normalize_ch(x:torch.Tensor, mean, std):
 def unznormalize_ch(x, mean, std):
     """Undoes channel-wise z-norm"""
     inverse_mean = [-mean[i]/std[i] for i in range(len(mean))]
-    inverse_std = [1/std[i] for i in range(len(mean))]
+    inverse_std = [1/std[i] for i in range(len(std))]
     return meanstd_normalize_ch(x, inverse_mean, inverse_std)
 
 

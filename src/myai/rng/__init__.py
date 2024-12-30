@@ -1,1 +1,1 @@
-from .rng import RNG
+from .rng import RNG, Seed

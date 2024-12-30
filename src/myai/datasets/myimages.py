@@ -41,7 +41,7 @@ extensions = ['jpg', 'png', 'jpeg', 'gif', 'webp', 'bmp', 'tiff', 'avif', 'jfif'
 root = r"E:\datasets\My Images"
 
 def _make(resize_fn = resize_to_contain, size = (128, 128), add_ui_stuff=False):
-    """decode all images and stack into a big array can also add ui stuff."""
+    """decode all images and stack into a big array can also add ui stuff to make it harder."""
     images = get_all_files(r'F:\Stuff\Images', extensions=extensions)
     if add_ui_stuff: images.extend(get_all_files(r'F:\Stuff 2\.themes\Orchis-Indigo-Compact', extensions=extensions))
 

@@ -1,5 +1,5 @@
 import functools
-import typing as T
+import typing
 from collections.abc import Callable, Sequence
 
 import torch
@@ -13,7 +13,7 @@ def _get_convnd_cls(ndim: int,):
     else: raise ValueError(f'Invalid ndim {ndim}.')
 
 
-class ConvLike(T.Protocol):
+class ConvLike(typing.Protocol):
     """Protocol for convolutional-like classes."""
     def __call__(
         self,
@@ -21,9 +21,9 @@ class ConvLike(T.Protocol):
         out_channels: int,
         # we intentionally don't type some args because it becomes a mess
         kernel_size,
-        stride: T.Any = 1,
-        padding: T.Any = 0,
-        dilation : T.Any= 1,
+        stride: typing.Any = 1,
+        padding: typing.Any = 0,
+        dilation : typing.Any= 1,
         groups: int = 1,
         bias: bool = True,
         padding_mode: str = 'zeros',
@@ -53,3 +53,5 @@ def convnd(
 
 # now this works
 __test_convnd: ConvLike = convnd
+
+
