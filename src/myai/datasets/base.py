@@ -5,7 +5,7 @@ import typing
 import numpy as np
 import torch
 
-DATASETS_ROOT = r'E:\datasets'
+DATASETS_ROOT = r'/var/mnt/hdd/Datasets'
 root: str = '???'
 
 

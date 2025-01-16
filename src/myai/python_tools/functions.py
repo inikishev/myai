@@ -108,3 +108,8 @@ class SaveSignature[V]:
     @property
     def is_constructed(self):
         return not isinstance(self.constructed_obj, _NotConstructed)
+
+    @is_constructed.setter
+    def is_constructed(self, v: bool):
+        if v: raise ValueError
+        self.constructed_obj = _NotConstructed()

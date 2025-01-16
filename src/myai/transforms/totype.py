@@ -5,7 +5,7 @@ def tonumpy(x) -> np.ndarray:
     if isinstance(x, torch.Tensor):
         return x.detach().cpu().numpy()
     if isinstance(x, np.ndarray): return x
-    return np.array(x, copy=False)
+    return np.asarray(x)
 
 def totensor(x, dtype = None, device = None):
     if isinstance(x, np.ndarray):

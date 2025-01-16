@@ -75,7 +75,7 @@ class Comparison:
         if highest: return self.n_highest(metric, n, last)
         return self.n_lowest(metric, n, last)
 
-    def plot(self, metric: str, n: int | None = 13, highest = True, last = False, x = None, fig = None, **kwargs: T.Unpack[_K_Line2D]):
+    def plot(self, metric: str, n: int | None = 10, highest = True, last = False, x = None, fig = None, **kwargs: T.Unpack[_K_Line2D]):
         if n is None: comp = self
         else: comp = self.n_best(metric, n, highest, last)
 

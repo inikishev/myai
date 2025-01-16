@@ -1,4 +1,4 @@
-import os
+import os, shutil
 import pathlib
 import typing as T
 from collections.abc import Callable, Sequence
@@ -93,3 +93,34 @@ def to_valid_fname(string:str, fallback = '-', empty_fallback = 'empty', maxlen 
     """
     if len(string) == 0: return empty_fallback
     return ''.join([(c if c in valid_chars or c.isalnum() else fallback) for c in string[:maxlen]])
+
+
+def flatten_dir(
+    root: str,
+    outdir: str,
+    extensions: str | Sequence[str] | None = None,
+    path_filter: Callable[[str], bool] | None = None,
+    sep: str | None = ".",
+    ext_override: str | None = None,
+):
+    """Copy all files in a directory into another directory, flattened.
+
+    Args:
+        root (str): directory to look in.
+        outdir (str): output directory
+        extensions (str | Sequence[str] | None, optional): filter by extension (case insensitive). Defaults to None.
+        path_filter (_type_, optional): _description_. Defaults to None.
+        sep (str | None, optional): if not None, includes path to the file in the file name, with `/` replaced by sep. Defaults to '.'.
+        ext_override (str | None, optional): if not None, replaces extensions of output files with this. Shouldn't include `.` in it. Defaults to None.
+    """
+    root = os.path.normpath(root)
+    files = get_all_files(root, extensions = extensions, path_filter=path_filter)
+
+    for f in files:
+        if sep is not None: name = f.replace(root, '').replace('/', sep).replace('\\', sep)[1:]
+        else: name = os.path.basename(f)
+
+        if ext_override is not None:
+            name = '.'.join(name.split('.')[:-1]) + f'.{ext_override}'
+
+        shutil.copyfile(f, os.path.join(outdir, name))
