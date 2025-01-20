@@ -1,7 +1,7 @@
 import torch
 import copy
 
-class GaussianSmoothing(torch.optim.Optimizer):
+class GaussianHomotopy(torch.optim.Optimizer):
     def __init__(self, params, lr=1e-3, num_samples=5, sigma=1., sigma_decay = 0.99):
         if lr < 0.0:
             raise ValueError(f"Invalid learning rate: {lr}")

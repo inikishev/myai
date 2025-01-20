@@ -8,7 +8,7 @@ from .equilibrium import EquilibriumOptimizer # second order seems quite good (l
 from .fft_sgd import FFTSGD, FFTMomentum, FrequencyOptimizer
 from .fractal import FractalOptimizer
 from .gaussian_smoothing import (
-    GaussianSmoothing,  # it was supposed to be potential function optimzier but it just made gs
+    GaussianHomotopy,  # it was supposed to be potential function optimzier but it just made gs
 )
 from .hill_climbing import ExhaustiveHillClimbing, HillClimbing
 from .hopfield import HopfieldOptimizer  # somewhat interesting
