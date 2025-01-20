@@ -88,26 +88,27 @@ class GradientExtrapolationSGD(torch.optim.Optimizer):
 
 
 class GradientLossExtrapolationSGD(torch.optim.Optimizer):
-    """_summary_
+    """so this uses linear regression to extrapolate gradient into the future but it also integrates loss information to
+    generate better gradients. THIS REQUIRES A LOT OF MEMORY SO USE 5000 PARAMETERS AT MAX
 
     Args:
-        params (_type_): _description_
-        lr (float, optional): _description_. Defaults to 0.01.
+        params (params): params.
+        lr (float, optional): learning rate. Defaults to 0.01.
         window_size (int, optional): number of gradients and losses to store and use. Defaults to 10.
         adjust_factor (float, optional):
-        epsilon (_type_, optional): for stability. Defaults to 1e-8.
-        pos_strategy (str, optional):
-        strategy to make loss differential positive
-
-            "min" - add minimum.
-
-            "clamp" - clamp to 0.
-
-            "old" - use old loop with nan to nam
-
-            Defaults to "min".
             weight of predicted gradients, if 1 uses predicted gradients only,
             if 0 uses original gradients only, else uses linear interpolation. Defaults to 1.
+        epsilon (_type_, optional): for stability. Defaults to 1e-8.
+        pos_strategy (str, optional):
+            strategy to make loss differential positive
+
+                "min" - add minimum.
+
+                "clamp" - clamp to 0.
+
+                "old" - use old loop with nan to nam
+
+                Defaults to "min".
         normalize_weights (bool, optional):
             whether to normalize loss differential to be in (0, 1) range. Defaults to False.
         crop_AB (bool, optional):

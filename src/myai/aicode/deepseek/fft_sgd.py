@@ -11,6 +11,7 @@ from torch import nn
 
 
 class FFTSGD(torch.optim.Optimizer):
+    """smoothes the gradient using fft, unlike laplacian smoothing sgd this doesnt flatten gradient and applies spatially"""
     def __init__(self, params, lr=1e-3, momentum=0, dampening=0,
                  weight_decay=0, nesterov=False, filter_threshold=0.1):
         defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
@@ -20,10 +21,11 @@ class FFTSGD(torch.optim.Optimizer):
             raise ValueError("Invalid optimizer parameters")
         super().__init__(params, defaults)
 
+    @torch.no_grad
     def step(self, closure=None):
         loss = None
         if closure is not None:
-            loss = closure()
+            with torch.enable_grad(): loss = closure()
 
         for group in self.param_groups:
             momentum = group['momentum']
@@ -70,14 +72,16 @@ class FFTSGD(torch.optim.Optimizer):
         return loss
 
 class FrequencyOptimizer(torch.optim.Optimizer):
+    """scales low frequencies in the gradient"""
     def __init__(self, params, lr=1e-3, frequency_scaling=1.0):
         defaults = dict(lr=lr, frequency_scaling=frequency_scaling)
         super().__init__(params, defaults)
 
+    @torch.no_grad
     def step(self, closure=None):
         loss = None
         if closure is not None:
-            loss = closure()
+            with torch.enable_grad(): loss = closure()
 
         for group in self.param_groups:
             lr = group['lr']
@@ -110,4 +114,42 @@ class FrequencyOptimizer(torch.optim.Optimizer):
                 # Update parameters
                 p.data.add_(d_p_modified, alpha=-lr)
 
+        return loss
+
+class FFTMomentum(torch.optim.Optimizer):
+    """fft momentum, if heavy ball momentum did not oscillate enough, use this (i.e this doesn't seem good)"""
+    def __init__(self, params, lr=0.01, history_length=10):
+        defaults = dict(lr=lr, history_length=history_length)
+        super().__init__(params, defaults)
+        for group in self.param_groups:
+            for p in group['params']:
+                p.grad_history = []
+
+    @torch.no_grad
+    def step(self, closure=None):
+        loss = None
+        if closure is not None:
+            with torch.enable_grad(): loss = closure()
+        for group in self.param_groups:
+            history_length = group['history_length']
+            lr = group['lr']
+            for p in group['params']:
+                if p.grad is None:
+                    continue
+                p.grad_history.append(p.grad.data.clone())
+                if len(p.grad_history) > history_length:
+                    p.grad_history.pop(0)
+                if len(p.grad_history) == history_length:
+                    grad_history = torch.stack(p.grad_history, dim=0)
+                    original_shape = grad_history.shape[1:]
+                    grad_flattened = grad_history.view(history_length, -1)
+                    fft = torch.fft.fft(grad_flattened, dim=0)
+                    cutoff = int(history_length * 0.3)
+                    fft[cutoff:-cutoff] = 0
+                    filtered_grad_flattened = torch.fft.ifft(fft, dim=0).real
+                    filtered_grad = filtered_grad_flattened.view(history_length, *original_shape)
+                    update_direction = filtered_grad.mean(dim=0)
+                    p.data.add_(update_direction, alpha=-lr)
+                else:
+                    p.data.add_(p.grad.data, alpha=-lr)
         return loss

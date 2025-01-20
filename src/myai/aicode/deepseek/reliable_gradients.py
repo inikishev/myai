@@ -1,7 +1,7 @@
 # pylint:disable=signature-differs, not-callable
 import torch
 
-class ReliableGradientOptimizer(torch.optim.Optimizer):
+class ReliableGradient(torch.optim.Optimizer):
     """Performs gradient descent unless gradient norm or variance is too low/too high.
     Then it performs a parameter-wise random vector line search.
 
