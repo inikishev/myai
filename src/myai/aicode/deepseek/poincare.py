@@ -106,7 +106,7 @@ class PoincareThreshold(Optimizer):
 
 
 
-class PoincareDualThreshold(Optimizer):
+class PoincareDualThreshol(Optimizer):
     """same as previous one, but does two steps per batch and does poincare something if second loss decreased compared to first one by threshold ratio."""
     def __init__(self, params, lr=1e-3, threshold_ratio=1e-12, momentum=0.9, curvature_scale=0.1):
         defaults = dict(lr=lr, threshold_ratio=threshold_ratio, momentum=momentum, curvature_scale=curvature_scale)
@@ -224,7 +224,7 @@ class PoincareDualThreshold(Optimizer):
 
 
 class PoincareDualStep(Optimizer):
-    """another versions seems not as good maybe but idk"""
+    """another versions =="""
     def __init__(self, params, lr=1e-3, momentum=0.9, curvature_scale=0.1, stability_epsilon=1e-6, dual_step=True):
         defaults = dict(lr=lr, momentum=momentum,
                        curvature_scale=curvature_scale,
