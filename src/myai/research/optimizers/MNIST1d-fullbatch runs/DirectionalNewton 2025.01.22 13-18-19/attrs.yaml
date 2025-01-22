@@ -1,0 +1,13 @@
+training: false
+start_time: 1737541039.0873072
+time_passed: 60.04658389091492
+name: DirectionalNewton
+device: cuda
+log_params: false
+log_projections: true
+save_edge_params: false
+current_step: 1963
+num_backwards: 793
+current_batch: 793
+current_epoch: 793
+seed: 42

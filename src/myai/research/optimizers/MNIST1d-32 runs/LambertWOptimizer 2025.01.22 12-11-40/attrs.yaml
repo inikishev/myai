@@ -1,0 +1,13 @@
+training: false
+start_time: 1737537040.7412143
+time_passed: 60.02641153335571
+name: LambertWOptimizer
+device: cuda
+log_params: false
+log_projections: true
+save_edge_params: false
+current_step: 689
+num_backwards: 689
+current_batch: 689
+current_epoch: 5
+seed: 42

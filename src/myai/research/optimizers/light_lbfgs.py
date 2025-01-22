@@ -1,11 +1,13 @@
+# pylint:disable=signature-differs, not-callable
+
 from collections import defaultdict
 
 import torch
 from torch.optim import Optimizer
 
 
-class StationaryOptimizer(Optimizer):
-    """uses stationary point finding algo"""
+class LightLBFGS(Optimizer):
+    """just lbfgs but need to tests against pytorch"""
     def __init__(self, params, lr=1.0, history_size=5, max_iter=50,
                  tolerance_grad=1e-7, tolerance_change=1e-9, line_search_fn='backtracking'):
         defaults = dict(lr=lr, history_size=history_size, max_iter=max_iter,

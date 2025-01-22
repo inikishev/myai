@@ -1,0 +1,13 @@
+training: false
+start_time: 1737540925.5526264
+time_passed: 60.00629997253418
+name: DirectionalExp
+device: cuda
+log_params: false
+log_projections: true
+save_edge_params: false
+current_step: 1050
+num_backwards: 1050
+current_batch: 350
+current_epoch: 350
+seed: 42
