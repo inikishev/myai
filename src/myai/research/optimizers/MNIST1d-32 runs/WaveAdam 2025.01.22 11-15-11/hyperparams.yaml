@@ -1,0 +1,10 @@
+model: ResNet18
+loss_fn: cross_entropy
+optimizer:
+  params: <generator object Module.parameters at 0x7f49583eec00>
+  lr: 0.003
+  betas: (0.9, 0.999)
+  frequencies: (0.1, 0.01, 0.001)
+  eps: 1e-08
+  __class__: WaveAdam
+  __constructor__: WaveAdam

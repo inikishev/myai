@@ -1,0 +1,13 @@
+training: false
+start_time: 1737475367.7776022
+time_passed: 60.037293434143066
+name: StationaryOptimizer-strong_wolfe
+device: cuda
+log_params: false
+log_projections: true
+save_edge_params: false
+current_step: 1017
+num_backwards: 1017
+current_batch: 301
+current_epoch: 301
+seed: 42

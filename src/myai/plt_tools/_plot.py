@@ -112,7 +112,7 @@ class _Plot:
         if figure is None: figure = ax.get_figure()
         if figure is None: raise ValueError("figure is None")
 
-        self.figure: Figure = figure
+        self.figure: Figure = figure # type:ignore
         self.ax: Axes = ax
 
     def grid(
@@ -420,9 +420,9 @@ class _Plot:
         else:
             vmap = False
         if num is None: num = (xrange[1] - xrange[0]) / step
-        x = lib.linspace(xrange[0], xrange[1], num)
-        y = lib.linspace(yrange[0], yrange[1], num)
-        X,Y = lib.meshgrid(x, y, indexing='ij') # grid of point
+        x = lib.linspace(xrange[0], xrange[1], num) # type:ignore
+        y = lib.linspace(yrange[0], yrange[1], num) # type:ignore
+        X,Y = lib.meshgrid(x, y, indexing='ij') # grid of point # type:ignore
         try:
             X = X.astype(dtype)
             Y = Y.astype(dtype)
@@ -573,6 +573,7 @@ class _Plot:
         return self
 
     def figsize(self, w: float | tuple[float, float] = (6.4, 4.8), h: float | None = None, forward: bool = True):
+        """Width, height"""
         self.figure.set_size_inches(w, h, forward)
         return self
 

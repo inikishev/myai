@@ -1,0 +1,16 @@
+model: ResNet18
+loss_fn: cross_entropy
+optimizer:
+  params: <generator object Module.parameters at 0x7feaf63f3a00>
+  lr: 0.1
+  betas: (0.9, 0.999)
+  eps: 1e-08
+  weight_decay: 0
+  amsgrad: false
+  foreach: None
+  maximize: false
+  capturable: false
+  differentiable: false
+  fused: None
+  __class__: Adam
+  __constructor__: Adam

@@ -1,0 +1,13 @@
+training: false
+start_time: 1737532916.9846723
+time_passed: 60.01884078979492
+name: TAME
+device: cuda
+log_params: false
+log_projections: true
+save_edge_params: false
+current_step: 1680
+num_backwards: 1680
+current_batch: 1680
+current_epoch: 13
+seed: 42

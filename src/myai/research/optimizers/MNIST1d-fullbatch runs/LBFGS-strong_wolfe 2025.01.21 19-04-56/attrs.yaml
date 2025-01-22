@@ -1,0 +1,13 @@
+training: false
+start_time: 1737475436.1913588
+time_passed: 60.04196906089783
+name: LBFGS-strong_wolfe
+device: cuda
+log_params: false
+log_projections: true
+save_edge_params: false
+current_step: 979
+num_backwards: 979
+current_batch: 720
+current_epoch: 720
+seed: 42

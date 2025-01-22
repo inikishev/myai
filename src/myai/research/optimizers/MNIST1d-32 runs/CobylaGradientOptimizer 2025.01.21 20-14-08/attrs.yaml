@@ -1,0 +1,13 @@
+training: false
+start_time: 1737479588.1120715
+time_passed: 60.001879930496216
+name: CobylaGradientOptimizer
+device: cuda
+log_params: false
+log_projections: true
+save_edge_params: false
+current_step: 4009
+num_backwards: 4009
+current_batch: 2004
+current_epoch: 16
+seed: 42

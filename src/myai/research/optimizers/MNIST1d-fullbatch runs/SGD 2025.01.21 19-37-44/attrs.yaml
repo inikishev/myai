@@ -1,0 +1,13 @@
+training: false
+start_time: 1737477404.56273
+time_passed: 60.04088878631592
+name: SGD
+device: cuda
+log_params: false
+log_projections: true
+save_edge_params: false
+current_step: 1083
+num_backwards: 1083
+current_batch: 1083
+current_epoch: 1083
+seed: 42

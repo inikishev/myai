@@ -1,0 +1,13 @@
+training: false
+start_time: 1737476205.0436726
+time_passed: 60.003801107406616
+name: Adam
+device: cuda
+log_params: false
+log_projections: true
+save_edge_params: false
+current_step: 3793
+num_backwards: 3793
+current_batch: 3793
+current_epoch: 30
+seed: 42

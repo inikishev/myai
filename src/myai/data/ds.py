@@ -227,6 +227,14 @@ class DS[R](abc.Sequence[R]):
             if callable(target_idx): target = target_idx(data)
             else: target = data[target_idx]
 
+             # tensors are unique objects even if they have the same value
+            if isinstance(target, torch.Tensor):
+                assert target.numel() == 1, target.shape
+                target = target.detach().cpu().item()
+            elif isinstance(target, np.ndarray):
+                assert target.size == 1, target.shape
+                target = target.item()
+
             if target in samples_per_class: samples_per_class[target].append(sample)
             else: samples_per_class[target] = [sample]
 
@@ -265,6 +273,7 @@ class DS[R](abc.Sequence[R]):
         else:
             num_classes = len(samples_per_class)
             num_samples_per_class = num_samples // num_classes
+
             if isinstance(num_samples, float): num_samples = int(num_samples * num_samples_per_class)
             samples_per_class = {k: v[:num_samples_per_class] for k,v in samples_per_class.items()}
 

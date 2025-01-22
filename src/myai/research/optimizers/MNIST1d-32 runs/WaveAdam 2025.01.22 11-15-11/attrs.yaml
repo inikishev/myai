@@ -1,0 +1,13 @@
+training: false
+start_time: 1737533651.3550951
+time_passed: 60.01054310798645
+name: WaveAdam
+device: cuda
+log_params: false
+log_projections: true
+save_edge_params: false
+current_step: 825
+num_backwards: 825
+current_batch: 825
+current_epoch: 6
+seed: 42
