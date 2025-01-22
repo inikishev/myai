@@ -20,8 +20,8 @@ def conjugate_gradient(Hvp_fn, b, max_iter=10, tol=1e-5):
         rsold = rsnew
     return x
 
-class EquilibriumOptimizer(Optimizer):
-    """second order and evaluates hvps to solve HΔθ = -g with CG, so on test functions seems good"""
+class NewtonCG(Optimizer):
+    """newton cg"""
     def __init__(self, params, lr:float=1, cg_max_iter=10, cg_tol=1e-5):
         if lr <= 0:
             raise ValueError(f"Invalid learning rate: {lr}")
