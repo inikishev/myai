@@ -1,0 +1,9 @@
+model: ResNet18
+loss_fn: cross_entropy
+optimizer:
+  params: <generator object Module.parameters at 0x7fbe72167e60>
+  lr: 0.003
+  beta: 0.9
+  epsilon: 1e-08
+  __class__: FourierPreconditioner
+  __constructor__: FourierPreconditioner
