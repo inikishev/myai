@@ -1,8 +1,0 @@
-model: ResNet18
-loss_fn: cross_entropy
-optimizer:
-  params: <generator object Module.parameters at 0x7f5b64c93220>
-  lr: 0.001
-  delta: 0.001
-  __class__: NonPolyOptimizer
-  __constructor__: NonPolyOptimizer

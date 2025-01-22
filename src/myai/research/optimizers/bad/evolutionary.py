@@ -9,6 +9,7 @@ from torch.optim import Optimizer
 
 
 class EvolutionaryGradientOptimizer(Optimizer):
+    """evolutionary algo with gradient information and no thought whatsoever put into it"""
     def __init__(self, params, lr=1e-3, population_size=5,
                  reset_interval=50, elite_ratio=0.4, noise_scale=0.1,
                  noise_decay=0.99):

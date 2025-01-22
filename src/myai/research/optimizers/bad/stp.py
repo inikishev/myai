@@ -9,6 +9,7 @@ from torch.optim import Optimizer
 
 
 class ImprovedSTP(Optimizer):
+    """stp maybe better"""
     def __init__(self, params, lr=1e-3, history_size=1000, epsilon=1e-8):
         defaults = dict(lr=lr, history_size=history_size, epsilon=epsilon)
         super().__init__(params, defaults)

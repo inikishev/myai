@@ -2,10 +2,7 @@
 import torch
 
 class ReliableGradient(torch.optim.Optimizer):
-    """Performs gradient descent unless gradient norm or variance is too low/too high.
-    Then it performs a parameter-wise random vector line search.
-
-    (note this is not a very good one...)
+    """Dumbest Optimizer Ever
 
     Args:
         params (_type_): _description_

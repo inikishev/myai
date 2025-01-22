@@ -1,12 +1,17 @@
-import torch
+# pylint:disable=signature-differs, not-callable
+
 import math
-from torch.optim import Optimizer
 from collections import defaultdict
+
 import numpy as np
 import scipy.sparse as sp
+import torch
 from sklearn.cluster import AgglomerativeClustering
+from torch.optim import Optimizer
+
 
 class GraphTraversalOptimizer(Optimizer):
+    """useless zeroth order optimizer"""
     def __init__(self, params, lr=1e-3, num_directions=20, exploration=0.25,
                  update_interval=10, projection_interval=50, max_edges=100):
         params = list(params)
@@ -83,7 +88,7 @@ class GraphTraversalOptimizer(Optimizer):
         self.projected_graph = defaultdict(set)
         for i in range(self.n_params):
             cluster_i = labels[i]
-            valid_neighbors = [j for j in self.adj_matrix.rows[i] if j < self.n_params]
+            valid_neighbors = [j for j in self.adj_matrix.rows[i] if j < self.n_params] # type:ignore
             for j in valid_neighbors:
                 cluster_j = labels[j]
                 if cluster_i != cluster_j and cluster_j < n_clusters:

@@ -1,5 +1,7 @@
-import torch
 import copy
+
+import torch
+
 
 class GaussianHomotopy(torch.optim.Optimizer):
     """(sort of) gaussian homotopy, I just made sigma decay slowly."""

@@ -6,7 +6,7 @@ import torch
 
 
 class DirectionalExp(torch.optim.Optimizer):
-    """basically like directional newton step but with an exponential model instead of quadratic, I actually think dis better"""
+    """basically like directional newton step but with an exponential model instead of quadratic, I actually think this is better"""
     def __init__(self, params, lr=1e-3, delta=1e-3):
         if delta <= 0:
             raise ValueError("Delta must be positive")

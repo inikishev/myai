@@ -4,6 +4,7 @@ import torch
 from torch.optim.optimizer import Optimizer
 
 class FourierPreconditioner(Optimizer):
+    """does random stuff with fft hoping it would improve convergence (spoiler it doesnt)"""
     def __init__(self, params, lr=1e-3, beta=0.9, epsilon=1e-8):
         if lr < 0.0:
             raise ValueError(f"Invalid learning rate: {lr}")

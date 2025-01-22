@@ -1,9 +1,0 @@
-model: ResNet18
-loss_fn: cross_entropy
-optimizer:
-  params: <generator object Module.parameters at 0x7fbe4ba92a40>
-  lr: 0.001
-  betas: (0.9, 0.999)
-  eps: 1e-08
-  __class__: LambertWOptimizer
-  __constructor__: LambertWOptimizer

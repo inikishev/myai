@@ -6,6 +6,7 @@ import numpy as np
 
 
 class FFTSubspaceSCRN(torch.optim.Optimizer):
+    """cubic regularized newton in an fft subspace"""
     def __init__(self, params, subspace_dim, reg_coef=1.0, momentum=0.9, damping=1e-6, max_iters=10, tol=1e-6, subspace='old'):
         params = list(params)
         self.params = params
