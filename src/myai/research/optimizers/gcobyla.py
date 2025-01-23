@@ -8,7 +8,7 @@ from torch.optim import Optimizer
 
 
 class GCobyla(Optimizer):
-    """cobyla (actually cobyqa) with gradient information"""
+    """cobyla (actually cobyqa) with gradient information. This is actually good by the way."""
     def __init__(self, params, delta=0.1, max_delta=1.0, min_delta=1e-9, eta=0.001,
                  history_size=5, max_consecutive_rejections=5, noise_scale=1e-8,
                  curvature_decay=0.9, direction_memory=0.5):
