@@ -11,7 +11,7 @@ from torch.optim import Optimizer
 
 
 class GraphTraversalOptimizer(Optimizer):
-    """useless zeroth order optimizer"""
+    """a lot of code and not a lot of convergence"""
     def __init__(self, params, lr=1e-3, num_directions=20, exploration=0.25,
                  update_interval=10, projection_interval=50, max_edges=100):
         params = list(params)

@@ -1,3 +1,5 @@
+# pylint:disable=signature-differs, not-callable
+
 from collections import deque
 
 import torch

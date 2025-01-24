@@ -2,7 +2,7 @@ import torch
 from torch.optim import Optimizer
 
 class TAME(Optimizer):
-    """better than adam???"""
+    """now why would this have good initial convergence"""
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999, 0.9), alpha=0.1,
                  scale=1.0, eps=1e-8):
         defaults = dict(lr=lr, betas=betas, alpha=alpha, scale=scale, eps=eps)

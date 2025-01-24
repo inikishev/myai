@@ -4,6 +4,7 @@ import torch
 from torch.optim import Optimizer
 
 class IntegrationOptimizer(Optimizer):
+    """do those coefficients help in any way?"""
     def __init__(self, params, lr=1e-3, sigma=0.1, num_points=3):
         if num_points != 3:
             raise ValueError("This implementation currently only supports 3 quadrature points.")

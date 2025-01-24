@@ -1,7 +1,7 @@
 import torch
 from torch.optim import Optimizer
 
-class CenterOfGravityOptimizer(Optimizer):
+class CenterOfGravityMethod(Optimizer):
     def __init__(self, params, initial_bounds):
         """
         Only for 1-3 variables. This is very computationally expensive but has fast convergence.

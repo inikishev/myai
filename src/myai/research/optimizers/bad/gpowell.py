@@ -3,7 +3,7 @@ import torch
 from torch.optim import Optimizer
 
 class GPowell(Optimizer):
-    """powell that uses gradient information"""
+    """powell that uses gradient information, but not very effectively"""
     def __init__(self, params, c1=1e-4, c2=0.4, max_ls=20, max_zoom=20,
                 direction_history=5, reset_threshold=0.1):
         defaults = dict(c1=c1, c2=c2, max_ls=max_ls, max_zoom=max_zoom,

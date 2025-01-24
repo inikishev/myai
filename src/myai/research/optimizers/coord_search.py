@@ -13,7 +13,7 @@ from torch import nn
 
 class CoordSearch(tz.core.TensorListOptimizer):
     """
-    Something like adaptive coordinate wise line search, actually works well.
+    Something like adaptive coordinate wise line search, actually works well
 
     Parameters:
         params ( ): The parameters to optimize

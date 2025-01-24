@@ -7,7 +7,7 @@ from torch.optim import Optimizer
 
 
 class MorseFlow(Optimizer):
-    """seems just worse in every way compared to SGD or Adam"""
+    """it was supposed to be more stable, but seems just worse in every way compared to SGD or Adam"""
     def __init__(self, params, lr=1e-3, momentum=0.9,
                  topo_scale=0.1, stability_threshold=60):
         defaults = dict(

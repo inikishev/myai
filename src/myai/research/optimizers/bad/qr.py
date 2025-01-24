@@ -4,7 +4,7 @@ import torch
 from torch.optim import Optimizer
 
 class StructuredQROptimizer(Optimizer):
-    """Transforms the gradient using the orthogonal matrix Q to align it with the column space of the parameter matrixs"""
+    """Transforms the gradient using the orthogonal matrix Q to align it with the column space of the parameter matrix"""
     def __init__(self, params, lr=0.01):
         if lr < 0.0:
             raise ValueError(f"Invalid learning rate: {lr}")

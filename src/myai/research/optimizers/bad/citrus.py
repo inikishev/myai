@@ -1,7 +1,10 @@
+# pylint:disable=signature-differs, not-callable
+
 import torch
 from torch.optim import Optimizer
 
 class Citrus(Optimizer):
+    """uses parameter magnitudes in update rule which is... sort of interesting"""
     def __init__(self, params, lr=1e-3, peel_factor=0.1, eps=1e-8):
         defaults = dict(lr=lr, peel_factor=peel_factor, eps=eps)
         super(Citrus, self).__init__(params, defaults)

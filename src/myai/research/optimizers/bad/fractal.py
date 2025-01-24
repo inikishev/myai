@@ -3,7 +3,7 @@ import torch
 from torch.optim import Optimizer
 
 class FractalOptimizer(Optimizer):
-    """SGD but seems to waste 2 additional evaluates per step which doesn't help at all"""
+    """SGD that wastes 2 additional evaluates per step for no reason"""
     def __init__(self, params, lr=1e-3, fractal_lr=1e-4, beta=1.0, eps=1e-8):
         if lr < 0.0:
             raise ValueError(f"Invalid learning rate: {lr}")

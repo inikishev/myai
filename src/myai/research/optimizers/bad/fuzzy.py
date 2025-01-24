@@ -14,6 +14,7 @@ def triangular(x: float, peak: float, left_width: float, right_width: float) -> 
         return (right_bound - x) / (right_bound - peak)
 
 class FuzzyLogicOptimizer(Optimizer):
+    """untested yet"""
     def __init__(self, params, lr=1e-3, ema_alpha=0.1, eps=1e-8):
         defaults = dict(lr=lr, ema_alpha=ema_alpha, eps=eps)
         super().__init__(params, defaults)

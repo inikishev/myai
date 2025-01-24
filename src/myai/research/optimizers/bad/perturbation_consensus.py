@@ -3,6 +3,7 @@ import torch
 from torch.optim import Optimizer
 
 class PertubationConsensus(Optimizer):
+    """no testing has been performed"""
     def __init__(self, params, lr=1e-3, sigma = 1e-1, num_grads=3, discount=0.1):
         if not 0.0 <= lr:
             raise ValueError(f"Invalid learning rate: {lr}")

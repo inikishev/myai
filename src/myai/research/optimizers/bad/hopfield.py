@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class HopfieldOptimizer:
-    """potentially interesting, performance and LR similar to SGD."""
+    """potentially interesting, or not, performance and LR similar to SGD."""
     def __init__(self, params, lr=0.01, memory_size=5, temperature=1.0):
         self.params = list(params)
         self.lr = lr

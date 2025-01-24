@@ -5,6 +5,8 @@ class RungeKutta(Optimizer):
     """
     Implements an optimizer using the fourth-order Runge-Kutta (RK4) method for ODE integration.
 
+    Uses four function evaluations to generate an update direction that is almost SGD.
+
     Args:
         params (iterable): Iterable of parameters to optimize.
         lr (float): Learning rate (step size) for the RK4 update.

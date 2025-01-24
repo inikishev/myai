@@ -4,6 +4,7 @@ import torch
 from torch.optim import Optimizer
 
 class CashKarp(Optimizer):
+    """can Cash–Karp method generate better directions?"""
     def __init__(self, params, lr=1e-3):
         if lr < 0.0:
             raise ValueError(f"Invalid learning rate: {lr}")

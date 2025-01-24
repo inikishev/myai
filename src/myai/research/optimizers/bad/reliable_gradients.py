@@ -2,7 +2,7 @@
 import torch
 
 class ReliableGradient(torch.optim.Optimizer):
-    """Dumbest Optimizer Ever
+    """any use for this???
 
     Args:
         params (_type_): _description_

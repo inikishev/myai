@@ -3,6 +3,7 @@
 import torch
 
 class GradientExtrapolationSGD(torch.optim.Optimizer):
+    """extrapolates future gradients with least squares, which is just an extremely computationally taxing approximation to momentum"""
     def __init__(self, params, lr=0.01, window_size=10, adjust_factor:float = 1.):
         defaults = dict(lr=lr, window_size=window_size, adjust_factor=adjust_factor)
         super().__init__(params, defaults)
@@ -88,7 +89,7 @@ class GradientExtrapolationSGD(torch.optim.Optimizer):
 
 
 class GradientLossExtrapolationSGD(torch.optim.Optimizer):
-    """so this uses linear regression to extrapolate gradient into the future but it also integrates loss information to
+    """so this uses least squares to extrapolate gradient into the future but it also integrates loss information to
     generate better gradients. THIS REQUIRES A LOT OF MEMORY SO USE 5000 PARAMETERS AT MAX
 
     Args:

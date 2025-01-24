@@ -5,6 +5,7 @@ from torch.optim import Optimizer
 
 
 class Homeomorphic(Optimizer):
+    """untested yes there is no point in wrapped closure shut up shut up shut up"""
     def __init__(self, params, lr=1e-3, alpha=0.1, beta=1.0, num_iters=5):
         if lr <= 0:
             raise ValueError("Invalid learning rate: {}".format(lr))

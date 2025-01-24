@@ -30,6 +30,8 @@ def lambertw(x, iterations=5):
     return z
 
 class LambertW(Optimizer):
+    """lambertw thought of adamw? nope thats lambert w function,
+    we added it to increse computational burden so that it feels like the optimizer is doing something clever"""
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8):
         # if not 0.0 <= lr:
         #     raise ValueError("Invalid learning rate: {}".format(lr))

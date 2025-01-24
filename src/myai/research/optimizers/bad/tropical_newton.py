@@ -5,6 +5,7 @@ from torch.optim import Optimizer
 from collections import deque,defaultdict
 
 class TropicalNewton(Optimizer):
+    """dododododododoododod"""
     def __init__(self, params, lr=0.01, buffer_size=2):
         if lr < 0.0:
             raise ValueError(f"Invalid learning rate: {lr}")

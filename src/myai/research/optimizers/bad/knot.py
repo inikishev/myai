@@ -20,7 +20,7 @@ class KnotRegularization(optim.Optimizer):
 
     def step(self, closure=None):
         if closure is None:
-            raise ValueError("KnotOptimizer requires a closure")
+            raise ValueError("KnotRegularization requires a closure")
 
         # Compute main loss
         model_loss = closure(False)
