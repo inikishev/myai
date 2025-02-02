@@ -10,8 +10,8 @@ import torchzero as tz
 from torch import nn
 
 
-#region HillClimbing
-class HillClimbing(tz.core.TensorListOptimizer):
+#region PatternSearch
+class PatternSearch(tz.core.TensorListOptimizer):
     """
     tests all straight directions. Includes adaptive step size.
 
@@ -62,8 +62,8 @@ class HillClimbing(tz.core.TensorListOptimizer):
         return best_value
 #endregion
 
-#region ExhaustiveHillClimbing
-class ExhaustiveHillClimbing(tz.core.TensorListOptimizer):
+#region BruteHillClimbing
+class BruteHillClimbing(tz.core.TensorListOptimizer):
     """Test all straight and all diagonal directions.
 
     Args:

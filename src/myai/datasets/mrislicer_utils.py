@@ -7,7 +7,7 @@ from operator import call
 import joblib
 import torch
 from mrid import totensor
-from mrid.training.mri_slicer import MRISlicer, randcrop2d
+from mrid.training.mri_slicer import MRISlicer, randcrop2dt
 
 from ..data import DS
 from ..plt_tools import imshow
@@ -93,8 +93,8 @@ def make_ds(dataset: list[MRISlicer] | str, num_classes: int, around: int, any_p
     and `(cls, *window_size)` one-hot encoded mask (or binary if num classes 1)."""
     ds = DS()
     slices = get_seg_slices(dataset, around = around, any_prob = any_prob)
-    if num_classes == 1: transforms = [partial(randcrop2d, size = window_size), _unsqueeze_x_mask]
-    else: transforms = [partial(randcrop2d, size = window_size), partial(_one_hot_x_mask, num_classes = num_classes)]
+    if num_classes == 1: transforms = [partial(randcrop2dt, size = window_size), _unsqueeze_x_mask]
+    else: transforms = [partial(randcrop2dt, size = window_size), partial(_one_hot_x_mask, num_classes = num_classes)]
     ds.add_samples_(slices, loader = call, transform=transforms)
     return ds
 

@@ -11,7 +11,7 @@ class CubicPreconditioning(Optimizer):
 
     b. despite the name it is not clear if this is actually cubic. at the very least it is quadratic."""
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999, 0.99), epsilon=1e-6,
-                 update_freq=10, line_search_freq:int|None=100, line_search_iters=10, line_search_init_lr = 1,
+                 update_freq=1, line_search_freq:int|None=100, line_search_iters=10, line_search_init_lr = 1,
                  cubic_solve_eps=1e-8, max_ls=5, max_third_order=1.0,
                  h_floor=1e-8, t_floor=1e-12):
         defaults = dict(lr=lr, betas=betas, epsilon=epsilon,

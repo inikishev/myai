@@ -1,4 +1,4 @@
-# pylint:disable=signature-differs, not-callable
+# pylint:disable=signature-differs, not-callable # type:ignore
 
 import torch
 from torch.optim import Optimizer

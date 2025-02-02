@@ -243,6 +243,9 @@ class Fig:
         ):
         loc = locals().copy()
         del loc['path'], loc['self']
+        label_kwargs = loc.pop('label_kwargs')
+        loc.update(label_kwargs)
+
         self.show(**loc)
         self.figure.savefig(path, bbox_inches='tight', pad_inches=0)
         self.close()

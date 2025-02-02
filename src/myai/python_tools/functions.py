@@ -11,6 +11,7 @@ type Composable[**P, R] = Callable[P, R] | Iterable[Callable[P, R]]
 
 class Compose:
     """Compose multiple functions into a single function. Note that functions will be flattened."""
+    __slots__ = ['functions']
     def __init__(self, *functions: Composable):
         self.functions = flatten(functions)
 
@@ -35,6 +36,7 @@ class Compose:
     def __setitem__(self, i, v): self.functions[i] = v
     def __delitem__(self, i): del self.functions[i]
 
+
 def compose(*functions: Composable) -> Callable:
     flattened = flatten(functions)
     if len(flattened) == 1: return flattened[0]
@@ -52,6 +54,14 @@ def get_full_signature[**P2](fn: Callable[P2, T.Any], *args: P2.args, **kwargs: 
     sig = inspect.signature(fn).bind(*args, **kwargs)
     sig.apply_defaults()
     return sig.arguments
+
+class Split:
+    __slots__ = ['functions']
+    def __init__(self, *functions: Composable | None):
+        self.functions = [maybe_compose(i) for i in functions]
+
+    def __call__(self, x):
+        return [f(i) for f, i in zip(self.functions, x)]
 
 
 def get_extra_signature[**P2](fn: Callable[P2, T.Any], *args: P2.args, **kwargs: P2.kwargs) -> OrderedDict[str, T.Any]:

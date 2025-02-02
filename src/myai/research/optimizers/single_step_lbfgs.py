@@ -1,11 +1,12 @@
-# type:ignore
+# pylint:disable=signature-differs, not-callable # type:ignore
+
 import torch
 from torch.optim import Optimizer
 
 class StochasticLBFGS(Optimizer):
-    """it is fairly stable and may beat lbfgs on some tasks.. but on minibatch tasks its just as bad.
-    so is this really stochastic? Idk. Crucially this doesn't use closure."""
-    def __init__(self, params, lr=1.0, warmup_steps=5, buffer_size=5,
+    """This might work on problems with a bit of noise, but not mini-batch levels of noise.
+    And this doesn't use closure. Better than LBFGS and SGD on some tasks."""
+    def __init__(self, params, lr=0.1, warmup_steps=5, buffer_size=5,
                  min_damping=1e-3, max_lr_scale=10.0):
         defaults = dict(lr=lr, warmup_steps=warmup_steps, buffer_size=buffer_size,
                         min_damping=min_damping, max_lr_scale=max_lr_scale)
@@ -128,3 +129,109 @@ class StochasticLBFGS(Optimizer):
 
     def _vdot(self, a, b):
         return sum(torch.dot(ai.flatten(), bi.flatten()) for ai, bi in zip(a, b))
+
+
+class SingleStepLBFGS(Optimizer):
+    """LBFGS version that doesn't use closure. Better than LBFGS and SGD on some tasks.
+    If LBFGS goes unstable with lr = 1, this one might still work and beat it."""
+    def __init__(self, params, lr=1., history_size=5, epsilon=1e-8):
+        defaults = dict(lr=lr, history_size=history_size, epsilon=epsilon)
+        super().__init__(params, defaults)
+        self.state['step'] = 0
+        self.state['s_history'] = []
+        self.state['y_history'] = []
+        self.state['rho_history'] = []
+        self.state['prev_flat_grad'] = None
+        self.state['prev_flat_params'] = None
+
+    def _gather_flat_grad(self):
+        views = []
+        for group in self.param_groups:
+            for p in group['params']:
+                if p.grad is None:
+                    continue
+                views.append(p.grad.data.view(-1))
+        return torch.cat(views) if views else torch.tensor([])
+
+    def _gather_flat_params(self):
+        views = []
+        for group in self.param_groups:
+            for p in group['params']:
+                views.append(p.data.view(-1))
+        return torch.cat(views) if views else torch.tensor([])
+
+    def _distribute_flat_params(self, flat_params):
+        offset = 0
+        for group in self.param_groups:
+            for p in group['params']:
+                numel = p.data.numel()
+                p.data.copy_(flat_params[offset:offset+numel].view_as(p.data))
+                offset += numel
+
+    @torch.no_grad
+    def step(self, closure=None):
+        # closure = torch.enable_grad()(closure)
+        self.state['step'] += 1
+
+        # Compute current gradient
+        loss = None
+        if closure is not None:
+            with torch.enable_grad(): loss = closure()
+        # self.zero_grad()
+        # loss.backward()
+        flat_grad = self._gather_flat_grad()
+        flat_params = self._gather_flat_params()
+
+        # Initialize state for first step
+        if self.state['step'] == 1:
+            self.state['prev_flat_grad'] = flat_grad.detach().clone()
+            self.state['prev_flat_params'] = flat_params.detach().clone()
+            return loss
+
+        # Update history with s and y
+        s = flat_params - self.state['prev_flat_params']
+        y = flat_grad - self.state['prev_flat_grad']
+
+        history_size = self.defaults['history_size']
+        if len(self.state['s_history']) >= history_size:
+            self.state['s_history'].pop(0)
+            self.state['y_history'].pop(0)
+            self.state['rho_history'].pop(0)
+
+        ys = torch.dot(y, s)
+        if ys > self.defaults['epsilon']:
+            self.state['s_history'].append(s)
+            self.state['y_history'].append(y)
+            self.state['rho_history'].append(1.0 / ys)
+
+        # Compute search direction via L-BFGS two-loop recursion
+        q = flat_grad.neg()
+        alpha = []
+        for s, y, rho in zip(reversed(self.state['s_history']),
+                            reversed(self.state['y_history']),
+                            reversed(self.state['rho_history'])):
+            alpha_i = rho * torch.dot(s, q)
+            q.add_(y, alpha=-alpha_i)
+            alpha.append(alpha_i)
+
+        if self.state['s_history']:
+            gamma = self.state['s_history'][-1].dot(self.state['y_history'][-1]) / self.state['y_history'][-1].dot(self.state['y_history'][-1])
+            z = q * gamma
+        else:
+            z = q
+
+        for s, y, rho, alpha_i in zip(self.state['s_history'],
+                                    self.state['y_history'],
+                                    self.state['rho_history'],
+                                    reversed(alpha)):
+            beta = rho * torch.dot(y, z)
+            z.add_(s, alpha=alpha_i - beta)
+
+        # Update parameters
+        self._distribute_flat_params(flat_params + self.defaults['lr'] * z)
+
+        # Update previous state
+        self.state['prev_flat_grad'] = flat_grad.detach().clone()
+        self.state['prev_flat_params'] = flat_params.detach().clone()
+
+        return loss

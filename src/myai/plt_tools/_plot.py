@@ -243,7 +243,7 @@ class _Plot:
         nrows = max(nrows, 1)
 
         # make the grid
-        grid = make_grid(x, nrow=nrows, padding = padding, normalize=normalize, value_range=value_range, scale_each=scale_each, pad_value=pad_value)
+        grid = make_grid(x.float(), nrow=nrows, padding = padding, normalize=normalize, value_range=value_range, scale_each=scale_each, pad_value=pad_value)
         # this returns (C, H, W)
 
         return self.imshow(grid.moveaxis(0, -1), **kwargs,)

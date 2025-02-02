@@ -3,6 +3,7 @@ import os
 
 os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = '1'
 
+import copy
 import csv
 import functools
 import itertools
@@ -27,6 +28,7 @@ import torchzero as tz
 from torch import nn
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
+from torchinfo import summary as __
 from torchvision.transforms import v2
 from tqdm import tqdm
 
@@ -40,18 +42,44 @@ from .loaders.csv_ import csvread, csvwrite
 from .loaders.image import imread, imreadtensor, imwrite
 from .loaders.text import txtread, txtwrite
 from .plt_tools import Fig, imshow, imshow_grid, linechart, scatter
-from .python_tools import (ShutUp, clean_mem, compose, find_file_containing,
-                           flatten, get0, get1, get__name__, get_all_files,
-                           getlast, identity, identity_kwargs,
-                           listdir_fullpaths, maybe_compose,
-                           perf_counter_context, pretty_print_dict,
-                           print_callable_defaults)
+from .python_tools import (
+                           Compose,
+                           ShutUp,
+                           Split,
+                           clean_mem,
+                           compose,
+                           find_file_containing,
+                           flatten,
+                           get0,
+                           get1,
+                           get__name__,
+                           get_all_files,
+                           getlast,
+                           identity,
+                           identity_kwargs,
+                           listdir_fullpaths,
+                           maybe_compose,
+                           perf_counter_context,
+                           pretty_print_dict,
+                           print_callable_defaults,
+                           reduce_dim,
+                           time_context,
+)
 from .python_tools import printargs as printa
-from .python_tools import reduce_dim, time_context
 from .python_tools.functions import SaveSignature as sig
-from .torch_tools import (count_params, pad, pad_dim, pad_like, pad_to_shape,
-                          performance_tweaks)
-from .transforms import normalize, znormalize
+from .torch_tools import (
+                           count_params,
+                           pad,
+                           pad_dim,
+                           pad_like,
+                           pad_to_shape,
+                           performance_tweaks,
+)
+from .transforms import normalize, tonumpy, totensor, znormalize
 
 CUDA = torch.device('cuda')
 CPU = torch.device('cpu')
+
+
+summary = partial(__,  depth=100, col_names = ("input_size", "output_size", "kernel_size", "num_params", "trainable"), mode='train', row_settings =["depth", "var_names",])
+

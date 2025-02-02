@@ -107,11 +107,11 @@ class EnsureDevice(Transform):
         return ensure_device(x, device=self.device)
 
 def ensure_channel_first(x:torch.Tensor) -> torch.Tensor:
-    """x must be (C, *) or (*, C). This ensures (C, *)"""
+    """x must be `(C, *)` or `(*, C)`. This ensures `(C, *)`"""
     if x.shape[0] > x.shape[-1]: return x.movedim(-1, 0)
     return x
 
 def ensure_channel_last(x:torch.Tensor) -> torch.Tensor:
-    """x must be (C, *) or (*, C). This ensures (*, C)"""
+    """x must be `(C, *)` or `(*, C)`. This ensures `(*, C)`"""
     if x.shape[0] < x.shape[-1]: return x.movedim(0, -1)
     return x

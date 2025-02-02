@@ -23,16 +23,24 @@ class FastProgress(Callback):
         bar_sec: float = 1,
         plot_sec: float = 10,
         ybounds: tuple[float | None, float | None] | abc.Sequence[float | None] | None = None,
-        smooth: abc.Mapping[str, int] | None = None,
+        smooth: abc.Mapping[str, int] | None | abc.Sequence[int | None] = None,
     ):
+        if isinstance(metrics,str): metrics = [metrics]
+        else: metrics = list(metrics)
+
+        if smooth is None: smooth = {}
+        if isinstance(smooth, abc.Sequence):
+            if len(metrics) != len(smooth): raise ValueError(metrics, smooth)
+            smooth ={m:s for m, s in zip(metrics, smooth) if s is not None}
+
+
         self.metrics = metrics
         self.bar_step = bar_sec
         self.plot_step = plot_sec
         self.last_bar_update = time.time()
         self.last_plot_update = self.last_bar_update
         self.ybounds = ybounds
-        if smooth is None: self.smooth = {}
-        else: self.smooth = smooth
+        self.smooth = smooth
         self.initialized = False
 
     def before_fit(self, learner: "Learner"):
@@ -50,7 +58,8 @@ class FastProgress(Callback):
                     y = np.array(list(learner.logger[name].values()))
                     # only smooth when it is long enough
                     if smooth_length * 2 < len(y):
-                        y[smooth_length:-smooth_length] = convolve(y, np.ones(self.smooth[name]) / self.smooth[name], mode="valid")
+                        convolved = convolve(y, np.ones(self.smooth[name]) / self.smooth[name], mode="same")
+                        y[smooth_length:-smooth_length] = convolved[smooth_length:-smooth_length]
                     graphs.append([list(learner.logger[name].keys()), y])
 
                 # no smoothing

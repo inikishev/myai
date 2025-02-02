@@ -1,1 +1,1 @@
-from .renderer import OpenCVRenderer
+from .renderer import OpenCVRenderer, render_frames

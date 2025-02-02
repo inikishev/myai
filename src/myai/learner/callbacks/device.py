@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class Device(Callback):
     order = -20
-    def __init__(self, device: torch.device):
+    def __init__(self, device: torch.types.Device):
         """Callback that moves model and batches to a specified device.
 
         Args:

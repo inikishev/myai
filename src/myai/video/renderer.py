@@ -43,7 +43,7 @@ class OpenCVRenderer:
 
         self.writer = None
 
-    def add_frame(self, frame: np.ndarray):
+    def add_frame(self, frame: np.ndarray | torch.Tensor):
         """Write the next frame to the video file.
         All frames must of the same shape, have np.uint8 or torch.uint8 data type.
 
@@ -91,3 +91,10 @@ class OpenCVRenderer:
 
     def __exit__(self, type, value, traceback):
         self.release()
+
+
+def render_frames(file, frames, fps = 60):
+    with OpenCVRenderer(file, fps) as r:
+        for frame in frames:
+            r.add_frame(frame)
+

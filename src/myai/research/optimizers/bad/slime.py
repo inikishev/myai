@@ -1,3 +1,4 @@
+# pylint:disable=signature-differs, not-callable
 import torch
 from torch.optim import Optimizer
 import math

@@ -100,28 +100,25 @@ class Save2DSegmentationPreds(ConditionalCallback):
         figsize=24,
         binary_threshold = 0.5,
         alpha = 0.3,
+        split_input=True,
+        input_idx = 0,
     ):
-        """This saves:
-        1. inputs
-        2. raw preds
-        3. binary preds
-        4. binary preds overlaid
-        5. raw preds channels if more than 1
-        6. targets
-        7. targets overlaid
-        8. error overlaid
+        """Please make sure inputs are a batch with batch dimension!
 
-        :param inputs: The input batch.
-        :param targets: Sequence of targets for each input, defaults to None
-        :param labels: Labels for each input, defaults to None
-        :param dir: directory in root, defaults to "preds"
-        :param root: root learner directory, defaults to "runs"
-        :param activation: activation to apply to preds, defaults to None
-        :param nrows: rows in saved figure, defaults to None
-        :param ncols: cols in saved figure, defaults to None
-        :param figsize: Size of saved figure, defaults to 24
-        :param binary_threshold: binary threshold for binarizing single channel preds, defaults to 0.5
-        :param alpha: Alpha of segmentation overlay, defaults to 0.3
+        Args:
+            inputs (_type_): batch of inputs.
+            targets (_type_, optional): sequence of target segmentation per each input. Defaults to None.
+            labels (_type_, optional): _description_. Defaults to None.
+            dir (str, optional): _description_. Defaults to "preds".
+            root (str, optional): _description_. Defaults to "runs".
+            activation (abc.Callable | None, optional): activation function to apply to outputs. Defaults to None.
+            nrows (_type_, optional): _description_. Defaults to None.
+            ncols (_type_, optional): _description_. Defaults to None.
+            figsize (int, optional): _description_. Defaults to 24.
+            binary_threshold (float, optional): threshold for when preds are binary, after activation function has been applied. Defaults to 0.5.
+            alpha (float, optional): _description_. Defaults to 0.3.
+            split_input (bool, optional): if True, input channels will be shown as a grid, otherwise as a single RGB image. Defaults to True.
+            input_idx (bool, optional): index of the input channel to show segmentation on, only if `split_input`. Defaults to 0.
         """
         super().__init__()
         self.inputs = inputs
@@ -135,6 +132,9 @@ class Save2DSegmentationPreds(ConditionalCallback):
         self.alpha = alpha
         if labels is None: labels = list(range(len(inputs)))
         self.labels = labels
+
+        self.split_input = split_input
+        self.input_idx = input_idx
 
     def __call__(self, learner: "Learner"):
         # dir to save to
@@ -150,7 +150,14 @@ class Save2DSegmentationPreds(ConditionalCallback):
         # plotting
         fig = Fig()
         for i, (input, output, label) in enumerate(zip(self.inputs, preds, self.labels)):
-            fig.add(f'input {label}').imshow(input).axis('off')
+            # add input either as grid or as RGB
+            if self.split_input:
+                input_for_overlay = input[self.input_idx]
+                fig.add(f'input {label}').imshow_grid(input).axis('off')
+            else:
+                input_for_overlay = input
+                fig.add(f'input {label}').imshow(input).axis('off')
+
             fig.add(f'raw output {label}').imshow(output).axis('off')
 
             # output is converted to binary segmentation
@@ -161,7 +168,7 @@ class Save2DSegmentationPreds(ConditionalCallback):
                 fig.add(f'raw output channels {label}').imshow_grid(output, normalize=True, scale_each=True).axis('off')
                 binarized = output.argmax(0)
             fig.add(f'output {label}').segmentation(binarized, alpha = 1, bg_alpha=1).axis('off')
-            fig.add(f'output {label} overlay').imshow(input).segmentation(binarized, alpha = self.alpha).axis('off')
+            fig.add(f'output {label} overlay').imshow(input_for_overlay).segmentation(binarized, alpha = self.alpha).axis('off')
 
             # targets
             if self.targets is not None:
@@ -176,8 +183,8 @@ class Save2DSegmentationPreds(ConditionalCallback):
 
                 # we add raw targets, overlaid on input, and error
                 fig.add(f'target {label}').imshow(bin_target).axis('off')
-                fig.add(f'target {label} overlay').imshow(input).segmentation(bin_target, alpha = self.alpha).axis('off')
-                fig.add(f'error {label} overlay').imshow(input).segmentation(bin_target != binarized, alpha = self.alpha).axis('off')
+                fig.add(f'target {label} overlay').imshow(input_for_overlay).segmentation(bin_target, alpha = self.alpha).axis('off')
+                fig.add(f'error {label} overlay').imshow(input_for_overlay).segmentation(bin_target.to(binarized) != binarized, alpha = self.alpha).axis('off')
 
         fig.show(self.nrows, self.ncols, figsize = self.figsize)
         fig.savefig(os.path.join(dir, f'preds e{learner.total_epochs} s{learner.num_forwards}.png'))
