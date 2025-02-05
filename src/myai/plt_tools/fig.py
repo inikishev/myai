@@ -248,7 +248,7 @@ class Fig:
 
         self.show(**loc)
         self.figure.savefig(path, bbox_inches='tight', pad_inches=0)
-        self.close()
+        # self.close()
 
     def close(self):
         plt.close(self.figure)

@@ -8,6 +8,7 @@ from ...event_model import Callback
 
 if TYPE_CHECKING:
     from ..learner import Learner
+    from .val import TestEpoch
 
 class Accelerate(Callback):
     order = -20

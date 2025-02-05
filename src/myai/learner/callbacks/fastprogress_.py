@@ -71,7 +71,7 @@ class FastProgress(Callback):
 
         self.mb.update_graph(graphs, None, self.ybounds)
 
-    def after_train_step(self, learner: "Learner"):
+    def after_any_step(self, learner: "Learner"):
         if not self.initialized:
             self.pb.update(0) # required
             self.initialized = True

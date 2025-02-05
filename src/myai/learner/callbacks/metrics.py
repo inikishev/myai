@@ -178,6 +178,7 @@ class Dice(PerClassMetric):
         train_step: int | None = 1,
         test_step: int | None = 1,
         name="dice",
+        binary_threshold = 0.,
     ):
         """Dice metric. For binary and multiclass.
 
@@ -195,9 +196,13 @@ class Dice(PerClassMetric):
             test_step=test_step,
             bg_index=bg_index,
         )
+        self.binary_threshold = binary_threshold
 
     def __call__(self, learner: "Learner"):
-        return dice(batched_raw_preds_to_one_hot(learner.preds), learner.targets).detach().cpu()
+        n_channels = learner.preds.shape[1]
+        if n_channels > 1: preds = batched_raw_preds_to_one_hot(learner.preds)
+        else: preds = learner.preds > self.binary_threshold
+        return dice(preds, learner.targets).detach().cpu()
 
 class IOU(PerClassMetric):
     def __init__(
@@ -207,6 +212,7 @@ class IOU(PerClassMetric):
         train_step: int | None = 1,
         test_step: int | None = 1,
         name="iou",
+        binary_threshold = 0.,
     ):
         super().__init__(
             metric=name,
@@ -215,6 +221,10 @@ class IOU(PerClassMetric):
             test_step=test_step,
             bg_index=bg_index,
         )
+        self.binary_threshold = binary_threshold
 
     def __call__(self, learner: "Learner"):
-        return iou(batched_raw_preds_to_one_hot(learner.preds), learner.targets).detach().cpu()
+        n_channels = learner.preds.shape[1]
+        if n_channels > 1: preds = batched_raw_preds_to_one_hot(learner.preds)
+        else: preds = learner.preds > self.binary_threshold
+        return iou(preds, learner.targets).detach().cpu()

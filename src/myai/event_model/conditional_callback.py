@@ -34,6 +34,7 @@ class ConditionalCallback(Callback, ABC):
     def __init__(self, agg_fn = any):
         self.events: "dict[str, list[Callable[[EventModel], bool]]]" = {}
         self.agg_fn = agg_fn
+        self.triggered = False
 
     @abstractmethod
     def __call__(self, __model: "EventModel", *args, **kwargs):
@@ -41,7 +42,9 @@ class ConditionalCallback(Callback, ABC):
 
     def _conditional_run(self, model: "EventModel", event:str, *args, **kwargs):
         """This gets added as a `partial(_conditional_run, event=event_name)`."""
-        if self.agg_fn([f(model) for f in self.events[event]]):
+        self.triggered = False
+        if self.agg_fn(f(model) for f in self.events[event]):
+            self.triggered = True
             self(model, *args, **kwargs)
 
     def c_on(self, event: str):

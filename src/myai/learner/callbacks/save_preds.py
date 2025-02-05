@@ -79,9 +79,14 @@ class Save2DImagePreds(ConditionalCallback):
             if grad is not None:
                 fig.add(f'output grad {label}').imshow(grad).axis('off')
 
-        fig.show(self.nrows, self.ncols, figsize = self.figsize)
-        fig.savefig(os.path.join(dir, f'preds e{learner.total_epochs} s{learner.num_forwards}.png'))
+        fig.savefig(
+            path=os.path.join(dir, f'preds e{learner.total_epochs} s{learner.num_forwards}.png'),
+            nrows=self.nrows,
+            ncols=self.ncols,
+            figsize=self.figsize,
+        )
         fig.close()
+        fig.clear()
 
 
 class Save2DSegmentationPreds(ConditionalCallback):
@@ -97,7 +102,7 @@ class Save2DSegmentationPreds(ConditionalCallback):
         activation: abc.Callable | None = None,
         nrows=None,
         ncols=None,
-        figsize=24,
+        figsize=64,
         binary_threshold = 0.5,
         alpha = 0.3,
         split_input=True,
@@ -161,13 +166,14 @@ class Save2DSegmentationPreds(ConditionalCallback):
             fig.add(f'raw output {label}').imshow(output).axis('off')
 
             # output is converted to binary segmentation
-            if output.shape[0] == 0:
+            if output.shape[0] == 1:
                 binarized = torch.where(output > self.binary_threshold, 1, 0)
+                fig.add(f'output {label}').imshow(binarized, alpha = 1).axis('off')
             else:
                 # we also add a grid of all channel outputs
                 fig.add(f'raw output channels {label}').imshow_grid(output, normalize=True, scale_each=True).axis('off')
                 binarized = output.argmax(0)
-            fig.add(f'output {label}').segmentation(binarized, alpha = 1, bg_alpha=1).axis('off')
+                fig.add(f'output {label}').segmentation(binarized, alpha = 1, bg_alpha=1).axis('off')
             fig.add(f'output {label} overlay').imshow(input_for_overlay).segmentation(binarized, alpha = self.alpha).axis('off')
 
             # targets
@@ -175,7 +181,7 @@ class Save2DSegmentationPreds(ConditionalCallback):
                 target = self.targets[i]
                 # targets are converted to binary segmentation
                 if target.ndim == 3:
-                    if target.shape[0] == 0:
+                    if target.shape[0] == 1:
                         bin_target = torch.where(target > self.binary_threshold, 1, 0)
                     else:
                         bin_target = target.argmax(0)
@@ -186,8 +192,13 @@ class Save2DSegmentationPreds(ConditionalCallback):
                 fig.add(f'target {label} overlay').imshow(input_for_overlay).segmentation(bin_target, alpha = self.alpha).axis('off')
                 fig.add(f'error {label} overlay').imshow(input_for_overlay).segmentation(bin_target.to(binarized) != binarized, alpha = self.alpha).axis('off')
 
-        fig.show(self.nrows, self.ncols, figsize = self.figsize)
-        fig.savefig(os.path.join(dir, f'preds e{learner.total_epochs} s{learner.num_forwards}.png'))
-
+        fig.savefig(
+            path=os.path.join( dir, f"preds e{learner.total_epochs} s{learner.num_forwards}.png"),
+            nrows=self.nrows,
+            ncols=self.ncols,
+            figsize=self.figsize,
+        )
+        fig.close()
+        fig.clear()
 
 

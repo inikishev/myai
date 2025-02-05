@@ -32,7 +32,7 @@ from torchinfo import summary as __
 from torchvision.transforms import v2
 from tqdm import tqdm
 
-from . import nn as mynn
+from . import nn_old as mynn
 from . import python_tools
 from .data import DS
 from .event_model.callback import Callback

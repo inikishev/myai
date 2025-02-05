@@ -3,8 +3,9 @@ from typing import overload
 
 import numpy as np
 import torch
-
+from torchzero.random import uniform
 from ._base import RandomTransform, Transform
+
 
 __all__ = [
     "znormalize",
@@ -136,10 +137,10 @@ class RandZNormalizeBatch(RandomTransform):
     def forward(self, x): return rand_znormalize_batch(x, self.mean, self.std)
 
 @overload
-def normalize(x:torch.Tensor, min:float=0., max:float=1.) -> torch.Tensor: ...
+def normalize(x:torch.Tensor, min:float|torch.Tensor=0., max:float|torch.Tensor=1.) -> torch.Tensor: ...
 @overload
-def normalize(x:np.ndarray, min:float=0., max:float=1.) -> np.ndarray: ...
-def normalize(x:torch.Tensor | np.ndarray, min:float=0., max:float=1.) -> torch.Tensor | np.ndarray:
+def normalize(x:np.ndarray, min:float|np.ndarray=0., max:float|np.ndarray=1.) -> np.ndarray: ...
+def normalize(x:torch.Tensor | np.ndarray, min:float|np.ndarray|torch.Tensor=0., max:float|np.ndarray|torch.Tensor=1.) -> torch.Tensor | np.ndarray:
     """Normalize to `[min, max]`"""
     x = x - x.min()
     xmax = x.max()
@@ -209,7 +210,6 @@ class NormalizeBatch(Transform):
         self.max = max
     def forward(self, x): return normalize_batch(x, self.min, self.max)
 
-
 def shrink(x:np.ndarray | torch.Tensor, min=0.2, max=0.8):
     """Shrink the range of the input"""
     xmin = x.min()
@@ -239,12 +239,12 @@ class RandShrink(RandomTransform):
         self.p = p
     def forward(self, x): return rand_shrink(x, self.min, self.max)
 
-def contrast(x, min=0.2, max=0.8):
+def contrast(x: torch.Tensor, min=0.2, max=0.8):
     """Shrink the range of the input and expand back to original range"""
     xmin = x.min()
     xmax = x.max()
     r = xmax - xmin
-    return normalize(x.clip(xmin + r * min, xmax - r * (1-max)), xmin, xmax)
+    return normalize(x.clamp(xmin + r * min, xmax - r * (1-max)), xmin, xmax)
 
 class Contrast(Transform):
     def __init__(self, min=0.2, max=0.8):

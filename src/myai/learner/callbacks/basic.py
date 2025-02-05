@@ -20,3 +20,11 @@ class NoClosure(Callback):
         learner.set_use_closure(False)
     def exit(self, learner: "Learner"):
         learner.set_use_closure(True)
+
+
+class BatchTfms(Callback):
+    def __init__(self, tfms):
+        self.tfms = tfms
+
+    def before_train_batch(self, learner: "Learner"):
+        learner.batch = self.tfms(learner.batch)

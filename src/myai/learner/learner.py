@@ -407,7 +407,11 @@ class Learner(EventModel):
             learner_attrs = {} # learner state_dict for stuff like cur_batch
             for k, v in self.state_dict().items():
                 if k == 'logger': continue # logger is saved using `save`
-                if 'state_dict' in v: torch.save(v['state_dict'], os.path.join(dir, f'{k}.state_dict'))
+                if 'state_dict' in v:
+                    try:
+                        torch.save(v['state_dict'], os.path.join(dir, f'{k}.state_dict'))
+                    except Exception as e:
+                        warnings.warn(f'Failed to save {k}:\n{e!r}')
                 else: learner_attrs[k] = v
             torch.save(learner_attrs, os.path.join(dir, 'learner_attrs.state_dict'))
 

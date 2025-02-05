@@ -13,6 +13,8 @@ class Device(Callback):
     def __init__(self, device: torch.types.Device):
         """Callback that moves model and batches to a specified device.
 
+        Note that batch has to be either a tensor or an iterable of tensors.
+
         Args:
             device (torch.device): The device to move the model to.
         """

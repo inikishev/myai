@@ -36,7 +36,7 @@ def load_old_mrislicer_dataset(
     return dataset
 
 def load_mrislicer_dataset(path) -> list[MRISlicer]:
-    """Load dataset created with new mrid MRISlicer"""
+    """Load dataset created with new mrid MRISlicer (just typed joblib.load)"""
     return joblib.load(path)
 
 def get_seg_slices(dataset: list[MRISlicer] | str, around: int, any_prob: float = 0.5) -> list[abc.Callable[[], tuple[torch.Tensor, torch.Tensor]]]:
