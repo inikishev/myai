@@ -37,7 +37,8 @@ from . import python_tools
 from .data import DS
 from .event_model.callback import Callback
 from .event_model.conditional_callback import ConditionalCallback
-from .learner import *
+
+if sys.version_info[1] >= 12: from .learner import *
 from .loaders.csv_ import csvread, csvwrite
 from .loaders.image import imread, imreadtensor, imwrite
 from .loaders.text import txtread, txtwrite
@@ -67,8 +68,8 @@ from .python_tools import (
                            reduce_dim,
                            time_context,
 )
+from .python_tools import SaveSignature as sig
 from .python_tools import printargs as printa
-from .python_tools.functions import SaveSignature as sig
 from .torch_tools import (
                            count_params,
                            pad,

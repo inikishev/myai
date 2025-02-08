@@ -1,20 +1,26 @@
-# pylint: disable=undefined-variable
+    # pylint: disable=undefined-variable
 # because its bugged with generics
 import concurrent.futures
 import operator
 from collections import UserList, abc
 from collections.abc import Callable, Sequence
-from typing import Any
+from typing import Any, TypeVar
 
 import numpy as np
 import torch
 from light_dataloader import LightDataLoader, TensorDataLoader
 from torch.utils.data import DataLoader
 
-from ..python_tools import (Composable, SupportsIter, SupportsLenAndGetitem,
-                            compose, func2method, maybe_compose)
-from ..torch_tools import maybe_to
+from ..python_tools import (
+    Composable,
+    SupportsIter,
+    SupportsLenAndGetitem,
+    compose,
+    func2method,
+    maybe_compose,
+)
 from ..rng import RNG, Seed
+from ..torch_tools import maybe_to
 
 
 class Sample:
@@ -63,7 +69,9 @@ class _RandomChoice:
         self.rng = RNG(seed)
     def __call__(self): return self.rng.random.choice(self.data)()
 
-class DS[R](abc.Sequence[R]):
+# class DS[R](abc.Sequence[R]):
+R = TypeVar("R")
+class DS(abc.Sequence[R]):
     def __init__(self, n_threads = 0):
         super().__init__()
         self.samples: list[Sample] = []
@@ -140,7 +148,8 @@ class DS[R](abc.Sequence[R]):
         ds._add_sample_objects_(samples)
         return ds
 
-    def dataloader[D:Callable](self, batch_size: int, shuffle: bool, seed: int | None = None, cls: D = LightDataLoader) -> D:
+    # def dataloader[D:Callable](self, batch_size: int, shuffle: bool, seed: int | None = None, cls: D = LightDataLoader) -> D:
+    def dataloader(self, batch_size: int, shuffle: bool, seed: int | None = None, cls: R = LightDataLoader) -> R:
         return cls(self, batch_size = batch_size, shuffle = shuffle, seed=seed)
 
     def stack(self, dtype=None, device=None):

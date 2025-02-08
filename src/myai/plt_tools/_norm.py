@@ -1,9 +1,11 @@
 import typing as T
 
 import numpy as np
-from ..torch_tools.conversion import ensure_numpy
+
 from ..python_tools import identity
+from ..torch_tools import ensure_numpy
 from ..transforms import normalize
+
 
 def _log10_norm(x): return np.log10(x)
 def _log2_norm(x): return np.log2(x)

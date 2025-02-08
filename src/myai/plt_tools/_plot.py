@@ -1,5 +1,6 @@
-from typing import Unpack, Literal, TypeAlias, Any
 from contextlib import nullcontext
+from typing import Any, Literal, TypeAlias, Unpack
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -8,14 +9,21 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import AutoLocator, AutoMinorLocator
 from torchvision.utils import make_grid
 
-from ..python_tools.f2f import (func2func, method2func, method2method,
-                                method2method_return_override)
-from ..torch_tools import make_segmentation_overlay
-from ..torch_tools.conversion import (ensure_numpy_or_none_recursive,
-                                      ensure_numpy_recursive,
-                                      maybe_detach_cpu,
-                                      maybe_detach_cpu_recursive, maybe_ensure_pynumber)
-from ..transforms import totensor, tonumpy
+from ..python_tools import (
+    func2func,
+    method2func,
+    method2method,
+    method2method_return_override,
+)
+from ..torch_tools import (
+    ensure_numpy_or_none_recursive,
+    ensure_numpy_recursive,
+    make_segmentation_overlay,
+    maybe_detach_cpu,
+    maybe_detach_cpu_recursive,
+    maybe_ensure_pynumber,
+)
+from ..transforms import tonumpy, totensor
 from ._norm import _normalize
 from ._types import _FontSizes, _K_Collection, _K_Figure, _K_Line2D, _K_Text
 from ._utils import _prepare_image_for_plotting
@@ -24,9 +32,12 @@ _PlotFwdRef: TypeAlias = "_Plot"
 """Forward reference to _Plot for the method2method_return_override decorator"""
 
 def _get_grid(x, y, z, mode:Literal["linear", "nearest", "clough", "rbf"], xlim, ylim, zlim, step):
-    from scipy.interpolate import (CloughTocher2DInterpolator,
-                                    LinearNDInterpolator,
-                                    NearestNDInterpolator, RBFInterpolator)
+    from scipy.interpolate import (
+        CloughTocher2DInterpolator,
+        LinearNDInterpolator,
+        NearestNDInterpolator,
+        RBFInterpolator,
+    )
     INTERPOLATORS = {
         'linear': LinearNDInterpolator,
         'nearest': NearestNDInterpolator,

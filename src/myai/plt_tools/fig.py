@@ -3,12 +3,17 @@ from collections.abc import Callable
 from itertools import zip_longest
 from operator import attrgetter, methodcaller
 from types import NoneType
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
 
-from ..python_tools import Compose
-from ..python_tools.f2f import method2func, method2method_return_override, method2func_return_override
+from ..python_tools import (
+    Compose,
+    method2func,
+    method2func_return_override,
+    method2method_return_override,
+)
 from ._plot import _Plot
 from ._types import _K_Text
 

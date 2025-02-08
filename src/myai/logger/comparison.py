@@ -9,13 +9,37 @@ from collections.abc import Iterator, Mapping, MutableMapping
 
 import numpy as np
 import torch
-from glio.python_tools import int_at_beginning_raise
+
 
 from ..plt_tools._types import _K_Line2D
 from ..plt_tools.fig import Fig
 from .base_logger import BaseLogger
 from .dict_logger import DictLogger
 
+
+def int_at_beginning(s:str) -> int | None:
+    """If a string starts with an integer of any length, returns that integer. Otherwise returns None.
+
+    >>> int_at_beginning('123abc')
+    123
+
+    >>> int_at_beginning('abc')
+    None
+    """
+    i = 1
+    num = None
+    while True:
+        try:
+            num = int(s[:i])
+            i+=1
+        except ValueError:
+            return num
+
+def int_at_beginning_raise(s: str) -> int:
+    """If a string starts with an integer of any length, returns that integer. Otherwise raises ValueError."""
+    res = int_at_beginning(s)
+    if res is None: raise ValueError(f"String {s} does not start with an integer.")
+    return res
 
 class Comparison:
     def __init__(self, loggers: abc.Mapping[str, BaseLogger]):
