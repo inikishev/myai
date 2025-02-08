@@ -161,7 +161,7 @@ class CheckpointBest(Callback):
 
             # clean up dirs that are not last dirs of any metric
             used_dirs = set(self.last_dirs.values())
-            for dir in self.all_dirs:
+            for dir in self.all_dirs.copy():
                 if dir not in used_dirs:
                     if os.path.isdir(dir):
                         shutil.rmtree(dir)

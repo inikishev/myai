@@ -3,7 +3,7 @@ from .accelerate_ import Accelerate
 from .backward import CreateGraph, RetainGraph
 from .basic import NoClosure, BatchTfms
 from .checkpointing import Checkpoint, CheckpointBest, Cleanup
-from .default import NoGrad, NoTarget, Triplet, InputIsTarget
+from .default import NoGrad, NoTarget, Triplet, InputIsTarget, CustomBackwardFn
 from .device import Device
 from .fastprogress_ import FastProgress
 from .gradient import GradClipNorm, GradClipValue, GradNorm, GradSign, LaplacianSmoothing

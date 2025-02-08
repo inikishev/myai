@@ -12,7 +12,7 @@ from .performance import *
 from .printing import *
 from .profiling import *
 from .progress import Progress
-from .relaxed_multikey_dict import RelaxedMultikeyDict
+from .relaxed_multikey_dict import RelaxedMultikeyDict, normalize_string
 from .serialization import *
 from .threading_ import *
 from .time_ import *

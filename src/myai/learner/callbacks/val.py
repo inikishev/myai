@@ -37,7 +37,7 @@ class TestEpoch(ConditionalCallback):
 
         learner.train()
 
-def test_epoch(dl: Iterable, every: int | T.Literal['epoch'] | None, before_fit = True, after_fit = True):
+def test_epoch(dl: Iterable, every: int | T.Literal['epoch'] | None, before_fit = True, after_fit = True, on_fit_exception = True):
     """Get a configured test epoch callback.
 
     :param dl: Test dataloader.
@@ -58,4 +58,6 @@ def test_epoch(dl: Iterable, every: int | T.Literal['epoch'] | None, before_fit 
     else:
         if before_fit: cb.c_first('before_train_step')
         if after_fit: cb.c_on('after_fit')
+
+    if on_fit_exception: cb.c_on('on_fit_exception')
     return cb

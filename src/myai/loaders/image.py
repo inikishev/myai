@@ -23,7 +23,7 @@ def imread_plt(path:str) -> np.ndarray:
     return plt.imread(path)
 
 def imread_cv2(path):
-    return cv2.imread(path)[:, :, ::-1] # BRG -> RGB
+    return cv2.imread(path)[:, :, ::-1] # BRG -> RGB # pylint:disable=no-member
 
 def imread_imageio(path):
     return v3.imread(path)
@@ -44,6 +44,7 @@ def imreadtensor_pil(path:str) -> torch.Tensor:
     return torch.as_tensor(imread_pil(path))
 
 def imread(path, fns = (imread_pil, imread_plt, imread_cv2, imread_skimage, imread_imageio, )) -> np.ndarray:
+    """returns channel last numpy array"""
     for i,f in enumerate(fns):
         try: return f(path)
         except Exception as e:
@@ -51,6 +52,7 @@ def imread(path, fns = (imread_pil, imread_plt, imread_cv2, imread_skimage, imre
     raise ValueError("Could not read image")
 
 def imreadtensor(path:str, dtype=None, device=None):
+    """returns channel first tensor"""
     if path.lower().endswith(('jpg', 'jpeg', 'png', 'gif')):
         try:
             return imreadtensor_torchvision(path, dtype=dtype, device=device)

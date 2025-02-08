@@ -1,13 +1,14 @@
-import typing as T
+from typing import Any, TYPE_CHECKING
+from collections.abc import Iterable, Sequence
 from contextlib import nullcontext
 from functools import partial
-from collections.abc import Iterable, Sequence
+
 import torch
 
-from ...event_model import (Callback, CancelContext, ConditionalCallback,
-                           EventModel)
+from ...event_model import Callback, CancelContext, ConditionalCallback, EventModel
+from ...python_tools import get__name__
 
-if T.TYPE_CHECKING:
+if TYPE_CHECKING:
     from ..learner import Learner
 
 class Default(Callback):
@@ -46,7 +47,7 @@ class Default(Callback):
     def make_closure(self, learner: "Learner", batch,):
         return partial(learner.closure, batch,)
 
-    def inference(self, learner: "Learner", inputs: torch.Tensor | T.Any, enable_grad = False):
+    def inference(self, learner: "Learner", inputs: torch.Tensor | Any, enable_grad = False):
         learner.eval()
 
         if isinstance(inputs, torch.Tensor): inputs = inputs.to(learner.device)
@@ -84,7 +85,7 @@ class Default(Callback):
         for learner.cur_epoch in epochs_iterator:
             learner.one_epoch(dltrain, train=True)
 
-    def log(self, learner: "Learner", metric: str, value: T.Any):
+    def log(self, learner: "Learner", metric: str, value: Any):
         learner.logger.log(learner.num_forwards, metric, value)
 
 
@@ -136,3 +137,16 @@ class NoGrad(Callback):
                 learner.zero_grad()
                 learner.backward(loss)
         return loss
+
+
+class CustomBackwardFn(Callback):
+    """function should accept learner and return gradient to be backpropped from preds"""
+    def __init__(self, fn, pass_learner=False):
+        self.fn = fn
+        self.pass_learner = pass_learner
+
+        self._learner_text = f'BackwardFn-{get__name__(fn)}'
+
+    def backward(self, learner: "Learner", loss):
+        if self.pass_learner: learner.preds.backward(gradient=self.fn(learner))
+        else: learner.preds.backward(gradient=self.fn(learner.preds, learner.targets))

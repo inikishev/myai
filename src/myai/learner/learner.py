@@ -8,15 +8,21 @@ from datetime import datetime
 
 import numpy as np
 import torch
+import torchzero as tz
 
 from ..event_model import Callback, EventModel
 from ..loaders.text import txtwrite
 from ..loaders.yaml import yamlread, yamlwrite
 from ..logger.base_logger import BaseLogger
 from ..logger.dict_logger import DictLogger
-from ..python_tools import (SaveSignature, epoch_to_datetime, get__name__,
-                            get_extra_signature, make_dict_serializeable,
-                            to_valid_fname)
+from ..python_tools import (
+    SaveSignature,
+    epoch_to_datetime,
+    get__name__,
+    get_extra_signature,
+    make_dict_serializeable,
+    to_valid_fname,
+)
 from ..torch_tools import CUDA_IF_AVAILABLE, maybe_ensure_pynumber
 from .callbacks.default import Default
 from .callbacks.scheduler_ import scheduler as _scheduler_cb
@@ -27,6 +33,22 @@ DEFAULT_CALLBACKS = ()
 if T.TYPE_CHECKING:
     from accelerate import Accelerator
 
+def _tz_module_handler(v: tz.m.OptimizerModule):
+    if len(v.children) == 0: return v.__class__.__name__
+    return f"{v.__class__.__name__}({'-'.join(m.__class__.__name__ for m in v.children.values())}"
+
+def _tz_modular_handler(v: tz.Modular):
+    if v.__class__.__name__ != "Modular": return v.__class__.__name__
+    return f'M({"-".join(_tz_module_handler(m) for m in v.unrolled_modules)})'
+
+_extra_type_handlers = {
+    tz.Modular: _tz_modular_handler,
+}
+
+def _maybe_add_repr_(d: dict, attr):
+    """maybe adds __repr__ to d if attr has a handler"""
+    if type(attr) in _extra_type_handlers:
+        d['__repr__'] = _extra_type_handlers[type(attr)](attr)
 
 class Learner(EventModel):
     model: torch.nn.Module | T.Any
@@ -133,9 +155,10 @@ class Learner(EventModel):
 
         setattr(self, attr, x(*arglist, **kwargs)) # type:ignore
         self.info[attr] = make_dict_serializeable(
-            get_extra_signature(x, *args, **kwargs), raw_strings=False, recursive=True
+            get_extra_signature(x, *args, **kwargs), raw_strings=False, recursive=True, type_handlers=_extra_type_handlers
         )
         self.info[attr]['__class__'] = get__name__(getattr(self, attr))
+        _maybe_add_repr_(self.info[attr], getattr(self, attr))
 
         return self
 
@@ -145,13 +168,15 @@ class Learner(EventModel):
         # we set x and save signature by using _set_x_cls
         if isinstance(x, SaveSignature):
             setattr(self, attr, x.resolve())
-            self.info[attr] = make_dict_serializeable(x.extra_signature(), raw_strings=False, recursive=True)
+            self.info[attr] = make_dict_serializeable(x.extra_signature(), raw_strings=False, recursive=True, type_handlers=_extra_type_handlers)
+            _maybe_add_repr_(self.info[attr], x.resolve())
             return self
 
         # else just set the attribute
         setattr(self, attr, x)
         self.info[attr] = {"__class__": get__name__(x)}
-        if params is not None: self.info[attr].update(make_dict_serializeable(params, raw_strings=False, recursive=True))
+        _maybe_add_repr_(self.info[attr], x)
+        if params is not None: self.info[attr].update(make_dict_serializeable(params, raw_strings=False, recursive=True, type_handlers=_extra_type_handlers))
         return self
 
     def set_model_cls[**P](self, cls: abc.Callable[P, torch.nn.Module | abc.Callable], *args: P.args, **kwargs: P.kwargs):
@@ -173,7 +198,7 @@ class Learner(EventModel):
     def add_named_info(self, name: str, **info: T.Any):
         """Add named misc. info, for example transforms."""
         if name not in self.info: self.info[name] = {}
-        self.info[name].update(make_dict_serializeable(info, raw_strings=False, recursive=True))
+        self.info[name].update(make_dict_serializeable(info, raw_strings=False, recursive=True, type_handlers=_extra_type_handlers))
         return self
 
     def add_info(self, **info):
@@ -214,6 +239,7 @@ class Learner(EventModel):
         # get from self.info
         if base in self.info:
             if attr is None:
+                if '__repr__' in self.info[base]: return str(self.info[base]['__repr__'])
                 if '__class__' in self.info[base]: return str(self.info[base]['__class__'])
                 if '__constructor__' in self.info[base]: return str(self.info[base]['__constructor__'])
                 return ''
@@ -361,8 +387,10 @@ class Learner(EventModel):
 
             # if it has a state_dict, save a dictionary with the state dict and the type
             if hasattr(x, 'state_dict'):
-                state_dict[attr] = {"state_dict": x.state_dict(), "type": get__name__(x)}
-
+                try:
+                    state_dict[attr] = {"state_dict": x.state_dict(), "type": get__name__(x)}
+                except Exception as e:
+                    warnings.warn(f'Failed to save {attr}:\n{e!r}')
             # if it is a serializeable object,
             elif isinstance(x, (int, float, str, bool, np.ndarray, torch.Tensor)) or x is None:
                 state_dict[attr] = {"object": x}
