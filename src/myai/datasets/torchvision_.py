@@ -16,7 +16,11 @@ class _TorchvisionClassificationDataset:
 
         cls - class like torchvision.datasets.MNIST should be CLASSIFICATION."""
         self.root = os.path.join(DATASETS_ROOT, name)
-        if not os.path.exists(self.root): os.mkdir(self.root)
+        if not os.path.exists(self.root):
+            try:
+                os.mkdir(self.root)
+            except Exception as e:
+                print('hey idiot you are not me so your not allowed to use this👉😡👈')
         self.name = name
         self.cls = cls
 
