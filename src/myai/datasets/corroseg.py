@@ -44,7 +44,7 @@ def make_val_submission(outfile, model, batch_size = 32, threshold = 0):
 
         outputs = model(znormalize(inputs))
         outputs = outputs > threshold
-        submission += '\n'.join([f'{i.replace('.npy', '')},{','.join(map(str, o.ravel().numpy().astype(int)))}' for i, o in zip(ids, outputs.detach().cpu())])
+        submission += '\n'.join([f'{i.replace(".npy", "")},{",".join(map(str, o.ravel().numpy().astype(int)))}' for i, o in zip(ids, outputs.detach().cpu())])
         submission += '\n'
 
     with open(outfile, 'w', encoding = 'utf8') as f:
