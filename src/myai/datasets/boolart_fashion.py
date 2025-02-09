@@ -82,7 +82,7 @@ def make_val_submission(outfile, model, batch_size = 32):
         inputs /= STD
 
         outputs = model(inputs)
-        submission += '\n'.join([f'{i.replace('.jpg', '')},{int(o)}' for i, o in zip(ids, outputs.argmax(1).detach().cpu())])
+        submission += '\n'.join([f'{i.replace(".jpg", "")},{int(o)}' for i, o in zip(ids, outputs.argmax(1).detach().cpu())])
         submission += '\n'
 
     with open(outfile, 'w', encoding = 'utf8') as f:
