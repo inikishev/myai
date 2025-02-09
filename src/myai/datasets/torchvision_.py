@@ -16,11 +16,6 @@ class _TorchvisionClassificationDataset:
 
         cls - class like torchvision.datasets.MNIST should be CLASSIFICATION."""
         self.root = os.path.join(DATASETS_ROOT, name)
-        if not os.path.exists(self.root):
-            try:
-                os.mkdir(self.root)
-            except Exception as e:
-                print('hey idiot you are not me so your not allowed to use this😡')
         self.name = name
         self.cls = cls
 
@@ -42,6 +37,12 @@ class _TorchvisionClassificationDataset:
 
     def _save(self):
         """save znormalized dataset arrays to disk for fast loading."""
+        if not os.path.exists(self.root):
+            try:
+                os.mkdir(self.root)
+            except Exception as e:
+                print(f'hey idiot you are not me so your not allowed to use this😡:\n{e!r}')
+
         images, labels = self._make()
         np.savez_compressed(os.path.join(self.root, f'{self.name}.npz'), images=images, labels = labels)
 
