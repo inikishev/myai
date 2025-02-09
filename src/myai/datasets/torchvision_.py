@@ -20,7 +20,7 @@ class _TorchvisionClassificationDataset:
             try:
                 os.mkdir(self.root)
             except Exception as e:
-                print('hey idiot you are not me so your not allowed to use this👉😡👈')
+                print('hey idiot you are not me so your not allowed to use this😡')
         self.name = name
         self.cls = cls
 
