@@ -68,11 +68,9 @@ class LinearBlock(Sequential):
 
         cur_channels = in_features
 
-        for char in order:
-            char = char.lower()
-
+        for char in order.lower():
             # convolution
-            if char == 'c':
+            if char == 'l':
                 modules.append(linear_cls(
                     in_features=in_features,
                     out_features=out_features,
