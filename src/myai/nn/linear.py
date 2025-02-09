@@ -58,11 +58,14 @@ class LinearBlock(Sequential):
         dim = -1,
         act = None,
         dropout = None,
+        flatten = False,
         order = 'LAD',
         ndim = 0,
         linear_cls: LinearLike = Linear
     ):
         modules = []
+        if flatten: modules.append(torch.nn.Flatten())
+
         cur_channels = in_features
 
         for char in order:
