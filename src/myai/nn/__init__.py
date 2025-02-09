@@ -1,6 +1,9 @@
 from . import blocks as B
-from .conv import convnd
-from .conv_transpose import convtransposend
-from .pool import maxpoolnd, avgpoolnd
-from .containers import Sequential, ModuleList
+from .containers import ModuleList, Sequential
+from .conv import ConvBlock, convnd
+from .conv_transpose import ConvTransposeBlock, convtransposend
+from .dropout import dropoutnd
 from .func import ensure_module
+from .linear import Linear, LinearBlock
+from .norm import batchnormnd
+from .pool import avgpoolnd, maxpoolnd

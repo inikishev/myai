@@ -11,11 +11,11 @@ from .base import DATASETS_ROOT
 
 class _TorchvisionClassificationDataset:
     """same as dataset modules but in a class so that it can be created from any tv dataset"""
-    def __init__(self, name, cls):
+    def __init__(self, name, cls, root = DATASETS_ROOT):
         """name - name of dataset used for folder name in my datasets folder
 
         cls - class like torchvision.datasets.MNIST should be CLASSIFICATION."""
-        self.root = os.path.join(DATASETS_ROOT, name)
+        self.root = os.path.join(root, name)
         self.name = name
         self.cls = cls
 

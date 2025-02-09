@@ -71,6 +71,7 @@ class _RandomChoice:
 
 # class DS[R](abc.Sequence[R]):
 R = TypeVar("R")
+X = TypeVar("X")
 class DS(abc.Sequence[R]):
     def __init__(self, n_threads = 0):
         super().__init__()
@@ -149,7 +150,7 @@ class DS(abc.Sequence[R]):
         return ds
 
     # def dataloader[D:Callable](self, batch_size: int, shuffle: bool, seed: int | None = None, cls: D = LightDataLoader) -> D:
-    def dataloader(self, batch_size: int, shuffle: bool, seed: int | None = None, cls: R = LightDataLoader) -> R:
+    def dataloader(self, batch_size: int, shuffle: bool, seed: int | None = None, cls: X = LightDataLoader) -> X:
         return cls(self, batch_size = batch_size, shuffle = shuffle, seed=seed)
 
     def stack(self, dtype=None, device=None):
